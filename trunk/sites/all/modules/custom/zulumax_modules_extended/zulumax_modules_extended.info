@@ -1,0 +1,7 @@
+name = Modules Extended, Zulumax
+description = Extensions for available contrib modules
+core = 7.x
+version = 7.x-dev
+files[] = zulumax_modules_extended.test
+package = ZuluMax
+
