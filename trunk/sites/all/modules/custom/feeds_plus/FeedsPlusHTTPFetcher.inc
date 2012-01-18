@@ -1,8 +1,8 @@
 <?php
 
-require_once dirname (__FILE__) . '/../../extensions/Curl.php';
+require_once dirname (__FILE__) . '/external/Curl.php';
 
-class FeedsHTTPExtendedFetcherResult extends FeedsFetcherResult
+class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
 {
 	protected $config;
 
@@ -15,29 +15,32 @@ class FeedsHTTPExtendedFetcherResult extends FeedsFetcherResult
 
   public function getRaw ()
   {
-  	$url			= $this -> config ['source'];
-  	$postVars	= $this -> config ['postVars'];
+  	$url								= $this -> config ['source'];
+  	$postVars						= $this -> config ['postVars'];
+  	$postWholeContent		= $this -> config ['postWholeContent'];
   	
   	$curl			= new Curl ($url);
   	
-  	$curl -> setReferer ('http://zulutrade.com/Performance.aspx');
   	$curl -> setHeaders (array ('Content-type: application/json'));
   	
   	if ($postVars)
-  		$curl -> setPostContent ($postVars);
+  	{
+  		if ($postWholeContent)
+  			$curl -> setPostContent ($postVars);
+  		else
+  			$curl -> setPostAttributes (json_decode ($postVars));
+  	}
 
   	$retrieved = $curl -> retrieve ();
   	
-  	echo $retrieved;
-  	
-  	exit;
+  	return $retrieved;
   }
 }
 
 /**
  * Fetches data via HTTP.
  */
-class FeedsHTTPExtendedFetcher extends FeedsHTTPFetcher
+class FeedsPlusHTTPFetcher extends FeedsHTTPFetcher
 {
 	/**
 	 * @overrides
@@ -54,10 +57,19 @@ class FeedsHTTPExtendedFetcher extends FeedsHTTPFetcher
 	      '#required'				=> true
 	     ),
 	     
+			'postWholeContent' => array (
+	      '#type'						=> 'checkbox',
+	      '#title'					=> t('POST the whole content'),
+	      '#description'		=> t('If checked, following content will be treated as a single POST content. Elsewhere it will be treated as POST variables in the JSON format'),
+	      '#default_value'	=> isset ($source_config ['postWholeContent']) ? $source_config ['postWholeContent'] : '',
+	      '#maxlength'			=> null,
+	      '#required'				=> false
+			),
+			
 			'postVars' => array (
 	      '#type'						=> 'textarea',
-	      '#title'					=> t('POST variables'),
-	      '#description'		=> t('POST variables in JSON format, e.g.: {userId:3,userName:"Sonic"}'),
+	      '#title'					=> t('POST content or POST variables'),
+	      '#description'		=> t('POST content or POST variables in JSON format, e.g.: {userId:3,userName:"Sonic"}'),
 	      '#default_value'	=> isset ($source_config ['postVars']) ? $source_config ['postVars'] : '',
 	      '#maxlength'			=> null,
 	      '#required'				=> true
@@ -78,7 +90,7 @@ class FeedsHTTPExtendedFetcher extends FeedsHTTPFetcher
 		if ($this -> config['use_pubsubhubbub'] && ($raw = $this -> subscriber ($source -> feed_nid) -> receive ()))
 			return new FeedsFetcherResult ($raw);
 		
-		return new FeedsHTTPExtendedFetcherResult ($source_config);
+		return new FeedsPlusHTTPFetcherResult ($source_config);
 	}
 	
 

@@ -105,9 +105,6 @@ class Curl
             }
         }
         
-        var_dump ($this->address);	
-
-
         $getPlainAttributes = '';
 
         if ($this -> attributesGet)
@@ -327,7 +324,7 @@ class Curl
      * Sets the refer address
      * @param string $referer Referer address
      */
-    public function			setReferer				($rerefer)
+    public function			setReferer				($referer)
     {
         $this -> referer	= $referer;
     }
