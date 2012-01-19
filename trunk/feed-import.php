@@ -57,14 +57,22 @@
 				'source'								=> 'http://zulutrade.com/WebServices/Performance.asmx/SearchProviders',
 				'postVars'							=> '{"searchFilter":{"SortExpression":0,"SortDirection":0,"Page":' . $currentSPPage . ',"PageSize":' . $numSPItemsPerPage . ',"ProviderName":"","CountryCode":"","IsLive":false,"WinningTrades":false,"TradingWeeks":false,"Top100":false,"ApprovedPhoto":false,"RecentTrading":false,"Rated":false,"LiveFollowers":false,"EconomicEvents":false,"HasVideos":false,"IsBookmarked":false,"NotTradingExotics":false,"PipsFrom":"","PipsTo":"","TradesFrom":"","TradesTo":"","AvgPipsFrom":null,"AvgPipsTo":null,"WinningTradesFrom":null,"WinningTradesTo":null,"WeeksFrom":null,"WeeksTo":null,"MaxDDFrom":null,"MaxDDTo":null,"MaxDDPipsFrom":null,"MaxDDPipsTo":null,"CorrelationFrom":null,"CorrelationTo":null,"FollowersFrom":null,"FollowersTo":null,"MaxOpenTradesFrom":null,"MaxOpenTradesTo":null,"LowestPipValueFrom":null,"LowestPipValueTo":null,"BestTradeFrom":null,"BestTradeTo":null,"AvgTradeTimeFrom":null,"AvgTradeTimeTo":null,"AverageSlippageFrom":null,"AverageSlippageTo":null,"Timeframe":null,"ProfitableAccount":null,"LosingAccount":null,"Relation":null,"CurrencyPairs":null,"AffiliateID":-1}}',
 				'postWholeContent'			=> true,
-				'parser'								=> 'FeedsJSONPathParser',
+				'parser'								=> 'JSON',
 				'customReceivers' 			=> array (
+				
 					'strategyName'				=> array (
 						'source'						=> 'http://zulutrade.com/WebServices/Performance.asmx/GetProviderStrategy',
 						'sourceVar'					=> 'd',
-						'sourceParser'			=> 'FeedsJSONPathParser',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_JSON,
 						'postVars'					=> '{"providerId":#{id}}',
 						'postWholeContent'	=> true
+					),
+				
+					'profit'							=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/"ctl00_box1_lbPips"[^>]+>([^ ]+)/',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> function (&$var) { $var = str_replace (',', '', $var); }
 					)
 				)
 			)

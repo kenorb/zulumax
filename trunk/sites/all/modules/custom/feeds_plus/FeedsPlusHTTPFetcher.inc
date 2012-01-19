@@ -8,6 +8,10 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
 {
 	protected $config;
 	static $receiversCache;
+	
+	const ReceiverParser_HTML				= 0;
+	const ReceiverParser_HTML_Regex	= 1;
+	const ReceiverParser_JSON				= 2;
 
   public function __construct ($config)
   {
@@ -40,71 +44,85 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   	
   	if ($customReceivers)
   	{
-  		if ($parser == 'FeedsJSONPathParser')
+  		$field = new ReflectionProperty (get_class ($feed), 'config');
+  		$field -> setAccessible (true);
+  		$field = new ReflectionProperty ('FeedsJSONPathParser', 'config');
+  		$field -> setAccessible (true);
+  		$field = new ReflectionProperty ('FeedsNodeProcessor', 'config');
+  		$field -> setAccessible (true);
+  		
+  		$importerConfig			= &$feed -> importer -> config;
+  		$parserContextPath	= &$importerConfig ['parser']    ['config'] ['context'];
+  		$parserSources			= &$importerConfig ['parser']    ['config'] ['sources'];
+  		$processorMappings	= &$importerConfig ['processor'] ['config'] ['mappings'];
+  		
+  		if ($parser == 'JSON')
   		{
   			$sourceJSON = json_decode ($retrieved, true);
   			
-  			$field = new ReflectionProperty (get_class ($feed), 'config');
-  			$field -> setAccessible (true);
-  			$field = new ReflectionProperty ($parser, 'config');
-  			$field -> setAccessible (true);
-  			$field = new ReflectionProperty ('FeedsNodeProcessor', 'config');
-  			$field -> setAccessible (true);
-  			
-  			$importerConfig = &$feed -> importer -> config;
-  			
-  			$parserContextPath	= &$importerConfig ['parser']    ['config'] ['context'];
-  			$parserSources			= &$importerConfig ['parser']    ['config'] ['sources'];
-  			$processorMappings	= &$importerConfig ['processor'] ['config'] ['mappings'];
-  				
   			foreach ($customReceivers as $receiverName => $receiverConfig)
   			{
   				$receiverSource							= $receiverConfig ['source'];
   				$receiverSourceVar					= $receiverConfig ['sourceVar'];
+  				$receiverSourceParser				= $receiverConfig ['sourceParser'];
   				$receiverPostVars						= $receiverConfig ['postVars'];
   				$receiverPostWholeContent		= $receiverConfig ['postWholeContent'];
+  				$sourceVarCallback					= $receiverConfig ['sourceVarCallback'];
 
-  				$nodes = jsonPath ($sourceJSON, $parserContextPath);
-  				 
+ 					$nodes = jsonPath ($sourceJSON, $parserContextPath);
+ 					
   				foreach ($nodes as $nodeId => $node)
   				{
-  					$receiverPostVars = preg_replace_callback (
+  					$receiverPostVarsProcessed = preg_replace_callback (
   						'/#\{{1,1}([^\}]+)\}/',
   						function ($matches) use ($node, $receiverSourceVar) { return $node [$matches [1]]; },
   						$receiverPostVars
   					);
   					
-	  				echo "* Trying to receive content for '" . $receiverName . "' from " . $receiverSource . "\n";
+  					$receiverSourceProcessed = preg_replace_callback (
+  					  '/#\{{1,1}([^\}]+)\}/',
+  						function ($matches) use ($node, $receiverSourceVar) { return $node [$matches [1]]; },
+  						$receiverSource
+  					);
+  						
+  					
+	  				echo "* Trying to receive content for '" . $receiverName . "' from " . $receiverSourceProcessed . "\n";
 	  				
-	  				$receiverCacheKey = $receiverSource . '_' . $nodeId;
+	  				$receiverCacheKey = $receiverSourceProcessed . '_' . $nodeId;
 	  				
 	  				if (($cache = @self::$receiversCache [$receiverCacheKey]) !== null)
-	  				{
 	  					$receiverData = $cache;
-	  					echo '-------------------------- USING CACHE ---------------------------';
-	  				}
 	  				else
 	  				{
-		  				$curl = new Curl ($receiverSource);
+		  				$curl = new Curl ($receiverSourceProcessed);
 		  				$curl -> setHeaders (array ('Content-type: application/json'));
-		  				if ($receiverPostVars)
-		  					$receiverPostWholeContent ? $curl -> setPostContent ($receiverPostVars) : $curl -> setPostAttributes (json_decode ($receiverPostVars));
+		  				
+		  				if ($receiverPostVarsProcessed)
+		  					$receiverPostWholeContent ? $curl -> setPostContent ($receiverPostVarsProcessed) : $curl -> setPostAttributes (json_decode ($receiverPostVarsProcessed));
 		  				
 		  				self::$receiversCache [$receiverCacheKey] = $receiverData = $curl -> retrieve ();
 	  				}
 	  				
-	  				echo $receiverSourceVar . "\n";
-	  				
-	  				$receiverDataJSON				= json_decode ($receiverData, true);
-	  				$receiverSourceVarValue	= JsonStore::get ($receiverDataJSON, $receiverSourceVar);
+	  				if ($receiverSourceParser == self::ReceiverParser_HTML_Regex)
+	  				{
+	  					preg_match ($receiverSourceVar, $receiverData, $matches);
+	  					
+	  					$receiverSourceVarValue = $matches [1];
+	  				}
+	  				else
+	  				if ($receiverSourceParser == self::ReceiverParser_JSON)
+	  				{
+		  				$receiverSourceVarValue	= JsonStore::get (json_decode ($receiverData, true), $receiverSourceVar);
+	  				}
+		  				
+	  				if ($sourceVarCallback)
+	  					$sourceVarCallback ($receiverSourceVarValue);
 	  				
 	  				$JSONStorePath					= str_replace ('.*', '[' . $nodeId . '].0', $parserContextPath);
 	  				
 	  				JsonStore::add ($sourceJSON, $JSONStorePath, $receiverSourceVarValue, $receiverName);
   				}
-	  				
-  				
-  			}
+	 			}
   			
   			return json_encode ($sourceJSON);
   		}
