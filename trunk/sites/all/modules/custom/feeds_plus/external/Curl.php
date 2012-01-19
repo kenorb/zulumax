@@ -136,6 +136,7 @@ class Curl
         curl_setopt ($curl, CURLOPT_COOKIEFILE,			realpath ($this -> cookiesFilePath));
         curl_setopt ($curl, CURLOPT_COOKIESESSION,  FALSE);
         curl_setopt ($curl, CURLOPT_HTTPHEADER,  		$this -> requestHeaders);
+        curl_setopt ($curl, CURLOPT_ENCODING,				'UTF-8');
         
 
         $result = curl_exec ($curl);
