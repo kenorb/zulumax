@@ -11,9 +11,9 @@
 
 	$lockFilePath								= sys_get_temp_dir () . 'zulumax.lock';
 	$currentSPPagePath					= sys_get_temp_dir () . 'zulumax.sp-page';
-	$numSPItemsPerPage					= 20;
-	$numSPPagesToImportPerCRON	= 200;
-	$numSPPagesToImportPerSite	= $numSPPagesToImportPerCRON * 20;
+	$numSPItemsPerPage					= 1;
+	$numSPPagesToImportPerCRON	= 1;
+	$numSPPagesToImportPerSite	= $numSPPagesToImportPerCRON * 1;
 
 	$handle											= fopen ($lockFilePath, "w");
 	$locked											= false;
@@ -51,11 +51,22 @@
 		$feed = feeds_source ('signal_providers');
 		
 		$feed -> addConfig (array (
-			'FeedsPlusHTTPFetcher' => array (
-				'context'						=> array (),
-				'source'						=> 'http://zulutrade.com/WebServices/Performance.asmx/SearchProviders',
-				'postVars'					=> '{"searchFilter":{"SortExpression":0,"SortDirection":0,"Page":' . $currentSPPage . ',"PageSize":' . $numSPItemsPerPage . ',"ProviderName":"","CountryCode":"","IsLive":false,"WinningTrades":false,"TradingWeeks":false,"Top100":false,"ApprovedPhoto":false,"RecentTrading":false,"Rated":false,"LiveFollowers":false,"EconomicEvents":false,"HasVideos":false,"IsBookmarked":false,"NotTradingExotics":false,"PipsFrom":"","PipsTo":"","TradesFrom":"","TradesTo":"","AvgPipsFrom":null,"AvgPipsTo":null,"WinningTradesFrom":null,"WinningTradesTo":null,"WeeksFrom":null,"WeeksTo":null,"MaxDDFrom":null,"MaxDDTo":null,"MaxDDPipsFrom":null,"MaxDDPipsTo":null,"CorrelationFrom":null,"CorrelationTo":null,"FollowersFrom":null,"FollowersTo":null,"MaxOpenTradesFrom":null,"MaxOpenTradesTo":null,"LowestPipValueFrom":null,"LowestPipValueTo":null,"BestTradeFrom":null,"BestTradeTo":null,"AvgTradeTimeFrom":null,"AvgTradeTimeTo":null,"AverageSlippageFrom":null,"AverageSlippageTo":null,"Timeframe":null,"ProfitableAccount":null,"LosingAccount":null,"Relation":null,"CurrencyPairs":null,"AffiliateID":-1}}',
-				'postWholeContent'	=> true
+			'FeedsPlusHTTPFetcher' 		=> array (
+				'feed'									=> $feed,
+				'context'								=> array (),
+				'source'								=> 'http://zulutrade.com/WebServices/Performance.asmx/SearchProviders',
+				'postVars'							=> '{"searchFilter":{"SortExpression":0,"SortDirection":0,"Page":' . $currentSPPage . ',"PageSize":' . $numSPItemsPerPage . ',"ProviderName":"","CountryCode":"","IsLive":false,"WinningTrades":false,"TradingWeeks":false,"Top100":false,"ApprovedPhoto":false,"RecentTrading":false,"Rated":false,"LiveFollowers":false,"EconomicEvents":false,"HasVideos":false,"IsBookmarked":false,"NotTradingExotics":false,"PipsFrom":"","PipsTo":"","TradesFrom":"","TradesTo":"","AvgPipsFrom":null,"AvgPipsTo":null,"WinningTradesFrom":null,"WinningTradesTo":null,"WeeksFrom":null,"WeeksTo":null,"MaxDDFrom":null,"MaxDDTo":null,"MaxDDPipsFrom":null,"MaxDDPipsTo":null,"CorrelationFrom":null,"CorrelationTo":null,"FollowersFrom":null,"FollowersTo":null,"MaxOpenTradesFrom":null,"MaxOpenTradesTo":null,"LowestPipValueFrom":null,"LowestPipValueTo":null,"BestTradeFrom":null,"BestTradeTo":null,"AvgTradeTimeFrom":null,"AvgTradeTimeTo":null,"AverageSlippageFrom":null,"AverageSlippageTo":null,"Timeframe":null,"ProfitableAccount":null,"LosingAccount":null,"Relation":null,"CurrencyPairs":null,"AffiliateID":-1}}',
+				'postWholeContent'			=> true,
+				'parser'								=> 'FeedsJSONPathParser',
+				'customReceivers' 			=> array (
+					'strategyName'				=> array (
+						'source'						=> 'http://zulutrade.com/WebServices/Performance.asmx/GetProviderStrategy',
+						'sourceVar'					=> 'd',
+						'sourceParser'			=> 'FeedsJSONPathParser',
+						'postVars'					=> '{"providerId":#{id}}',
+						'postWholeContent'	=> true
+					)
+				)
 			)
 		));
 		
