@@ -116,7 +116,8 @@ function service_providers_field_group_info() {
       3 => 'field_updated_on',
       4 => 'field_account_type',
       5 => 'field_sp_id',
-      6 => 'title',
+      6 => 'field_strategy_name',
+      7 => 'title',
     ),
     'format_type' => 'fieldset',
     'format_settings' => array(
