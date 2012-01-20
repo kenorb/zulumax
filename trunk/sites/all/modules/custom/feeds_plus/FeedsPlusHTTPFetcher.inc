@@ -76,9 +76,6 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
  					
   				foreach ($nodes as $nodeId => $node)
   				{
-  					if ($node == 2)
-  						break;
-  					
   					self::$temporaryNode = $node;
   					
   					$receiverPostVarsProcessed = preg_replace_callback ('/#\{{1,1}([^\}]+)\}/',
