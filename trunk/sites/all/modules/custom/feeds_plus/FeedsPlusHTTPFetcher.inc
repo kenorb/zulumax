@@ -4,6 +4,14 @@ require_once dirname (__FILE__) . '/external/Curl.php';
 require_once dirname (__FILE__) . '/../../contrib/feeds_jsonpath_parser/jsonpath-0.8.1.php';
 require_once dirname (__FILE__) . '/external/JsonStore.php';
 
+class FeedsPlusFeedsSource extends FeedsSource
+{
+	public function getImporterConfig ()
+	{
+		return $this -> importer -> getConfig ();
+	}
+}
+
 class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
 {
 	protected $config;
@@ -12,6 +20,9 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
 	const ReceiverParser_HTML				= 0;
 	const ReceiverParser_HTML_Regex	= 1;
 	const ReceiverParser_JSON				= 2;
+	
+	static public $temporaryNode;
+	private $temporary;
 
   public function __construct ($config)
   {
@@ -29,7 +40,7 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   	$customReceivers			= $this -> config ['customReceivers'];
   	$parser								= $this -> config ['parser'];
   	
-  	$curl			= new Curl ($url);
+  	$curl = new Curl ($url);
   	$curl -> setHeaders (array ('Content-type: application/json;charset=UTF-8'));
   	
   	if ($postVars)
@@ -44,17 +55,8 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   	
   	if ($customReceivers)
   	{
-  		$field = new ReflectionProperty (get_class ($feed), 'config');
-  		$field -> setAccessible (true);
-  		$field = new ReflectionProperty ('FeedsJSONPathParser', 'config');
-  		$field -> setAccessible (true);
-  		$field = new ReflectionProperty ('FeedsNodeProcessor', 'config');
-  		$field -> setAccessible (true);
-  		
-  		$importerConfig			= &$feed -> importer -> config;
-  		$parserContextPath	= &$importerConfig ['parser']    ['config'] ['context'];
-  		$parserSources			= &$importerConfig ['parser']    ['config'] ['sources'];
-  		$processorMappings	= &$importerConfig ['processor'] ['config'] ['mappings'];
+  		$importerConfig			= $feed -> getImporterConfig ();
+  		$parserContextPath	= $importerConfig ['parser']    ['config'] ['context'];
   		
   		if ($parser == 'JSON')
   		{
@@ -73,18 +75,17 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
  					
   				foreach ($nodes as $nodeId => $node)
   				{
-  					$receiverPostVarsProcessed = preg_replace_callback (
-  						'/#\{{1,1}([^\}]+)\}/',
-  						function ($matches) use ($node, $receiverSourceVar) { return $node [$matches [1]]; },
+  					self::$temporaryNode = $node;
+  					
+  					$receiverPostVarsProcessed = preg_replace_callback ('/#\{{1,1}([^\}]+)\}/',
+  						create_function ('$matches', 'return FeedsPlusHTTPFetcherResult::$temporaryNode [$matches [1]];'),
   						$receiverPostVars
   					);
   					
-  					$receiverSourceProcessed = preg_replace_callback (
-  					  '/#\{{1,1}([^\}]+)\}/',
-  						function ($matches) use ($node, $receiverSourceVar) { return $node [$matches [1]]; },
+  					$receiverSourceProcessed = preg_replace_callback ('/#\{{1,1}([^\}]+)\}/',
+  						create_function ('$matches', 'return FeedsPlusHTTPFetcherResult::$temporaryNode [$matches [1]];'),
   						$receiverSource
   					);
-  						
   					
 	  				echo "* Trying to receive content for '" . $receiverName . "' from " . $receiverSourceProcessed . "\n";
 	  				

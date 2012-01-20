@@ -38,6 +38,9 @@
 	}
 
 	
+	variable_set ('feeds_source_class', 'FeedsPlusFeedsSource');
+	
+	
 	// Import should be done partially on each CRON call, so we have to save the current crawling position for future use.
 	$currentSPPage = (int)@file_get_contents ($currentSPPagePath);
 	
@@ -72,7 +75,7 @@
 						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
 						'sourceVar'					=> '/"ctl00_box1_lbPips"[^>]+>([^ ]+)/',
 						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
-						'sourceVarCallback'	=> function (&$var) { $var = str_replace (',', '', $var); }
+						'sourceVarCallback'	=> create_function ('&$var', '$var = str_replace (",", "", $var);')
 					)
 				)
 			)

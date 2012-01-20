@@ -1,5 +1,7 @@
 <?php 
 
+	require_once dirname (__FILE__) . '/FeedsPlusHTTPFetcher.inc';
+
 	function feeds_plus_feeds_plugins ()
 	{
 		$info = array();
