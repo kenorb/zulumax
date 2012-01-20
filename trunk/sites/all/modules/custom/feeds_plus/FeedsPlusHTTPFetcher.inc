@@ -117,9 +117,7 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
 	  				}
 	  				else
 	  				if ($receiverSourceParser == self::ReceiverParser_JSON)
-	  				{
 		  				$receiverSourceVarValue	= JsonStore::get (json_decode ($receiverData, true), $receiverSourceVar);
-	  				}
 		  			
 	  				$receiverSourceVarValue = trim ($receiverSourceVarValue);
 	  				
