@@ -236,6 +236,15 @@
 						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_JSON,
 						'sourceMatcher'			=> create_function ('$var', 'var_dump($var);exit;')
 					),
+					
+					'totalVotes'					=> array (
+						'source'						=> 'http://zulutrade.com/WebServices/ProviderRating.asmx/GetAverageRatings',
+						'postVars'					=> '{"providerID":#{id}}',
+						'postWholeContent'	=> true,
+						'sourceVar'					=> 'd.tr',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_JSON
+					),
+		
 		
 					
 				)

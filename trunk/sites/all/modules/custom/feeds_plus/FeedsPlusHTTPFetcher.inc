@@ -90,7 +90,7 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   					
 	  				echo "* Trying to receive content for '" . $receiverName . "' from " . $receiverSourceProcessed . "\n";
 	  				
-	  				$receiverCacheKey = $receiverSourceProcessed . '_' . $nodeId;
+	  				$receiverCacheKey = $receiverSourceProcessed . '_' . $nodeId . ($receiverPostVars ? ('_' . $receiverPostVars) : '');
 	  				
 	  				if (($cache = @self::$receiversCache [$receiverCacheKey]) !== null)
 	  					$receiverData = $cache;
