@@ -205,8 +205,14 @@
 						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
 						'sourceVar'					=> '/ctl00_box1_lbAvatar[^>]+>[^>]+>([^<]+)</m',
 						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex
+					),
+					
+					'balanceOfLiveAccounts' => array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/ctl00_box1_LabelAmountFollowing[^>]+>([^<]+)</m',
+						'sourceVarCallback'	=> create_function ('&$var', '$var = (int)str_replace (",", "", substr ($var, 1));'),
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex
 					)
-		
 				)
 			)
 		));
