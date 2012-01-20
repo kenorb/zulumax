@@ -68,6 +68,7 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   				$receiverSourceVar					= $receiverConfig ['sourceVar'];
   				$receiverSourceParser				= $receiverConfig ['sourceParser'];
   				$receiverPostVars						= $receiverConfig ['postVars'];
+  				$receiverSourceMatcher			= $receiverConfig ['sourceMatcher'];
   				$receiverPostWholeContent		= $receiverConfig ['postWholeContent'];
   				$sourceVarCallback					= $receiverConfig ['sourceVarCallback'];
 
@@ -75,6 +76,9 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
  					
   				foreach ($nodes as $nodeId => $node)
   				{
+  					if ($node == 2)
+  						break;
+  					
   					self::$temporaryNode = $node;
   					
   					$receiverPostVarsProcessed = preg_replace_callback ('/#\{{1,1}([^\}]+)\}/',
@@ -108,14 +112,20 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
 	  				{
 	  					preg_match ($receiverSourceVar, $receiverData, $matches);
 	  					
-	  					$receiverSourceVarValue = $matches [1];
+
+	  					if ($receiverSourceMatcher)
+	  						$receiverSourceVarValue = $receiverSourceMatcher ($matches); 
+	  					else
+	  						$receiverSourceVarValue = $matches [1];
 	  				}
 	  				else
 	  				if ($receiverSourceParser == self::ReceiverParser_JSON)
 	  				{
 		  				$receiverSourceVarValue	= JsonStore::get (json_decode ($receiverData, true), $receiverSourceVar);
 	  				}
-		  				
+		  			
+	  				$receiverSourceVarValue = trim ($receiverSourceVarValue);
+	  				
 	  				if ($sourceVarCallback)
 	  					$sourceVarCallback ($receiverSourceVarValue);
 	  				
@@ -124,7 +134,7 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
 	  				JsonStore::add ($sourceJSON, $JSONStorePath, $receiverSourceVarValue, $receiverName);
   				}
 	 			}
-  			
+	 			
   			return json_encode ($sourceJSON);
   		}
   	}

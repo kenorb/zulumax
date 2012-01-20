@@ -76,14 +76,144 @@
 						'sourceVar'					=> '/"ctl00_box1_lbPips"[^>]+>([^ ]+)/',
 						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
 						'sourceVarCallback'	=> create_function ('&$var', '$var = str_replace (",", "", $var);')
+					),
+					
+					'trades'							=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/Trades[^"]+[^>]+>([^<]+)</',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '$var = str_replace (",", "", $var);')
+					),
+					
+					'winningTrades'				=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/Winning trades[^"]+[^>]+>[^0-9]+([0-9]+)/',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex
+					),
+					
+					'avgPipsTrade'				=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/Average pips\/trade[^"]+[^>]+>([^<]+)</',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '$var = str_replace (",", "", $var);')
+					),
+					
+					// Float(Hours)
+					'avgTradeTime'				=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/Average trade time[^"]+[^>]+>([^<]+)</',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '
+							$var = str_replace (",", "", $var);
+							
+							if (strpos ($var, "hours") !== false)
+								$var = (float)(substr ($var, 0, strlen ($var) - 5));
+							else
+							if (strpos ($var, "days") !== false)
+								$var = (float)(substr ($var, 0, strlen ($var) - 4) * 24);
+							else
+							if (strpos ($var, "minutes") !== false)
+								$var = (float)(substr ($var, 0, strlen ($var) - 7) / 60);
+							else
+								$var = (float)$var;
+						')
+					),
+		
+					// Int
+					'maxDrawDown'					=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/ctl00_box1_LabelMaxDrawdown"[^"]+"[^"]+"[^>]+>([^%]+)%/m',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '$var = str_replace (",", "", $var);')
+					),
+		
+					'maxOpenTrades'				=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/ctl00_box1_LabelMaxOpenTrades"[^"]+"[^"]+"[^>]+>([^<]+)</m',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '$var = str_replace (",", "", $var);')
+					),
+					
+					'worstTrade'					=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/ctl00_box1_LabelMaxLow[^>]+>([^p]+)pips</',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '$var = str_replace (",", "", $var);')
+					),
+					
+					'bestTrade'						=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/ctl00_box1_LabelBestTrade[^>]+>([^p]+)pips</',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '$var = str_replace (",", "", $var);')
+					),
+		
+					'followers'						=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/Followers[^"]+[^>]+>([^<]+)</',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '$var = str_replace (",", "", $var);')
+					),
+					
+					'hasLiveFollowers'		=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/Has live followers[^"]+[^>]+>([^<]+)</',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '$var = $var == "yes" ? 1 : 0;')
+					),
+					
+					// Int
+					'ranking'							=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/ctl00_box1_LabelRanking[^>]+>[^0-9]*([0-9]+)/m',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '$var = str_replace (",", "", $var);')
+//					'sourceMatcher'	=> create_function ('$var', 'var_dump($var);exit;')
+					),
+		
+					'runningWeeks'				=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/Running weeks[^"]+[^>]+>([^<]+)</',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '$var = str_replace (",", "", $var);')
+					),
+					
+					// Int
+					'necessaryMinEquity'	=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/ctl00_box1_LabelNME"[^>]+>\$([^<]+)</m',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '$var = str_replace (",", "", $var);')
+					),
+					
+					'profileViewed'				=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/Viewed[^"]+[^>]+>([^t]+)times[^<]+</',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '$var = str_replace (",", "", $var);')
+					),
+		
+					// Date
+					'updatedOn'						=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/Updated on[^"]+[^>]+>([^<]+)</',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex,
+						'sourceVarCallback'	=> create_function ('&$var', '$var = date ("m/d/Y m:h", strtotime ($var));')
+					),
+					
+					'profile'							=> array (
+						'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
+						'sourceVar'					=> '/ctl00_box1_lbAvatar[^>]+>[^>]+>([^<]+)</m',
+						'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex
 					)
+		
 				)
 			)
 		));
 		
 		while (FEEDS_BATCH_COMPLETE != $feed -> import ())
 		{
-			sleep (1);
+			sleep (0);
 		}
 	}
 	
