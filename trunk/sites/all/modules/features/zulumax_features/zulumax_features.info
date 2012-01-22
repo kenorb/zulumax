@@ -1,6 +1,7 @@
 core = "7.x"
 dependencies[] = "features"
 dependencies[] = "service_providers"
+dependencies[] = "service_providers_signal_provider"
 dependencies[] = "followers"
 description = "Provides general features for ZuluMax site"
 name = "ZuluMax Features"

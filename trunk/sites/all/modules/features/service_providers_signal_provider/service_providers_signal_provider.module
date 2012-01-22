@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Service Providers - Signal Provider feature.
+ */
+
+include_once('service_providers_signal_provider.features.inc');
