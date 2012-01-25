@@ -92,9 +92,6 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   		{
   			$sourceJSON = json_decode ($retrieved, true);
   			
-  			// DELETETHIS
- 				$sourceJSON ['d'] = array ($sourceJSON ['d'] [0]);
-
   			$nodes = jsonPath ($sourceJSON, $parserContextPath);
 
   			foreach ($nodes as $nodeId => $node)

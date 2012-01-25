@@ -32,6 +32,8 @@
 		
 		public function finalize ()
 		{
+			db_query ("TRUNCATE z_cache_field");
+						
 			db_query ("
 				REPLACE INTO z_field_data_field_known_as (entity_type, bundle, deleted, entity_id, revision_id, language, delta, field_known_as_nid)
 				SELECT 'node', 'signal_provider', A.deleted, A.field_known_as_nid, A.revision_id, A.language, A.delta, A.entity_id
