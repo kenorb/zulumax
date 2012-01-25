@@ -654,7 +654,7 @@ function service_providers_field_default_fields() {
   $fields['node-signal_provider-field_known_as'] = array(
     'field_config' => array(
       'active' => '1',
-      'cardinality' => '1',
+      'cardinality' => '-1',
       'deleted' => '0',
       'entity_types' => array(),
       'field_name' => 'field_known_as',
@@ -675,6 +675,7 @@ function service_providers_field_default_fields() {
       'settings' => array(
         'referenceable_types' => array(
           'article' => 0,
+          'follower' => 0,
           'page' => 0,
           'signal_provider' => 'signal_provider',
         ),
@@ -710,16 +711,17 @@ function service_providers_field_default_fields() {
       'entity_type' => 'node',
       'field_name' => 'field_known_as',
       'label' => 'Also known as',
-      'required' => FALSE,
+      'required' => 0,
       'settings' => array(
         'user_register_form' => FALSE,
       ),
       'widget' => array(
+        'active' => 1,
         'module' => 'node_reference',
         'settings' => array(
           'autocomplete_match' => 'contains',
           'autocomplete_path' => 'node_reference/autocomplete',
-          'size' => 60,
+          'size' => '60',
         ),
         'type' => 'node_reference_autocomplete',
         'weight' => '6',
@@ -1265,7 +1267,7 @@ function service_providers_field_default_fields() {
       'entity_type' => 'node',
       'field_name' => 'field_sp_id',
       'label' => 'SP ID',
-      'required' => 0,
+      'required' => 1,
       'settings' => array(
         'max' => '',
         'min' => '0',
