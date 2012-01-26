@@ -59,6 +59,7 @@ function service_providers_signal_provider_feeds_importer_default() {
           'jsonpath_parser:27' => 'strategyName',
           'jsonpath_parser:28' => 'guid',
           'jsonpath_parser:29' => 'aka',
+          'jsonpath_parser:30' => 'tradingHistoryCSV',
         ),
         'debug' => array(
           'options' => array(
@@ -92,6 +93,7 @@ function service_providers_signal_provider_feeds_importer_default() {
             'jsonpath_parser:26' => 0,
             'jsonpath_parser:27' => 0,
             'jsonpath_parser:29' => 0,
+            'jsonpath_parser:30' => 0,
           ),
         ),
       ),
@@ -246,6 +248,11 @@ function service_providers_signal_provider_feeds_importer_default() {
           28 => array(
             'source' => 'jsonpath_parser:29',
             'target' => 'field_known_as:guid',
+            'unique' => FALSE,
+          ),
+          29 => array(
+            'source' => 'jsonpath_parser:30',
+            'target' => 'field_csv_file',
             'unique' => FALSE,
           ),
         ),

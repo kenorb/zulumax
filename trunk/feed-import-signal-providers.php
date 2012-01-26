@@ -14,6 +14,12 @@
 			
 			$this -> receivers = array (
 			
+				'tradingHistoryCSV'		=> array (
+					'source'						=> 'http://zulutrade.com/Export.ashx?d=providertrades&f=csv&id=#{id}&c=&df=1984-09-09&dt=2013-01-26',
+					'sourceContent'			=> FeedsPlusHTTPFetcherResult::Content_FileDownload,
+					'downloadTarget'		=> 'CSV-SP/#{id}.csv',
+				),
+				
 				'aka'									=> array (
 					'source'						=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
 					'sourceVar'					=> '%ctl00_box1_TableRowDuplicateAccounts[^>]+>(.*?)</td>%si',

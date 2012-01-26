@@ -40,9 +40,13 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
 	protected $config;
 	static $receiversCache;
 	
-	const ReceiverParser_HTML				= 0;
-	const ReceiverParser_HTML_Regex	= 1;
-	const ReceiverParser_JSON				= 2;
+	const Content_Text							= 0;
+	const Content_FileDownload			= 1;
+	
+	const ReceiverParser_None				= 0;
+	const ReceiverParser_HTML				= 1;
+	const ReceiverParser_HTML_Regex	= 2;
+	const ReceiverParser_JSON				= 3;
 	
 	static public $temporaryNode;
 	private $temporary;
@@ -94,12 +98,15 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   			
   			$nodes = jsonPath ($sourceJSON, $parserContextPath);
 
+  			$nodes = array ($nodes [0]);
+
   			foreach ($nodes as $nodeId => $node)
   				JsonStore::add ($sourceJSON, '$.d[' . $nodeId . '].0', md5 ($node ['id']), 'guid');
   			
   			foreach ($customReceivers as $receiverName => $receiverConfig)
   			{
   				$receiverSource							= @$receiverConfig ['source'];
+  				$receiverSourceContent			= @$receiverConfig ['sourceContent'];
   				$receiverSourceVar					= @$receiverConfig ['sourceVar'];
   				$receiverSourceParser				= @$receiverConfig ['sourceParser'];
   				$receiverPostVars						= @$receiverConfig ['postVars'];
@@ -107,9 +114,10 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   				$receiverPostWholeContent		= @$receiverConfig ['postWholeContent'];
   				$sourceVarCallback					= @$receiverConfig ['sourceVarCallback'];
   				$receiverValueOverride			= @$receiverConfig ['value'];
-
- 					
- 					
+  				
+  				if (!$receiverSourceContent)
+  					$receiverSourceContent = self::Content_Text;
+  				
   				foreach ($nodes as $nodeId => $node)
   				{
   					$JSONStorePath					= str_replace ('.*', '[' . $nodeId . '].0', $parserContextPath);
@@ -133,50 +141,91 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   							create_function ('$matches', 'return FeedsPlusHTTPFetcherResult::$temporaryNode [$matches [1]];'),
   							$receiverValueOverride
   						);
-  						
-  					if (!$receiverValueOverride)
-  					{
-		  				echo "* Trying to receive content for '" . $receiverName . "' from " . $receiverSourceProcessed . "\n";
-	
-		  				$receiverCacheKey = $receiverSourceProcessed . '_' . $nodeId . ($receiverPostVars ? ('_' . $receiverPostVars) : '');
-		  				
-		  				if (($cache = @self::$receiversCache [$receiverCacheKey]) !== null)
-		  					$receiverData = $cache;
-		  				else
-		  				{
-			  				$curl = new Curl ($receiverSourceProcessed);
-			  				$curl -> setHeaders (array ('Content-type: application/json'));
-			  				
-			  				if ($receiverPostVarsProcessed)
-			  					$receiverPostWholeContent ? $curl -> setPostContent ($receiverPostVarsProcessed) : $curl -> setPostAttributes (json_decode ($receiverPostVarsProcessed));
-			  				
-			  				self::$receiversCache [$receiverCacheKey] = $receiverData = $curl -> retrieve ();
-		  				}
-		  				
-		  				if ($receiverSourceParser == self::ReceiverParser_HTML_Regex)
-		  				{
-		  					preg_match ($receiverSourceVar, $receiverData, $matches);
-		  					
-		  					if ($receiverSourceMatcher)
-		  						$receiverSourceVarValue = $receiverSourceMatcher ($matches, $this -> config, $feed, $node);
-		  					else
-		  						$receiverSourceVarValue = $matches [1];
-		  				}
-		  				else
-		  				if ($receiverSourceParser == self::ReceiverParser_JSON)
-			  				$receiverSourceVarValue	= JsonStore::get (json_decode ($receiverData, true), $receiverSourceVar);
-			  			
-		  				
-		  				if (is_string ($receiverSourceVarValue))
-		  					$receiverSourceVarValue = trim ($receiverSourceVarValue);
-		  				
 
-		  				if ($sourceVarCallback)
-		  					$sourceVarCallback ($receiverSourceVarValue);
+  					switch ($receiverSourceContent)
+  					{
+  						case self::Content_Text:
+  					
+		  					if (!$receiverValueOverride)
+		  					{
+				  				echo "* Trying to receive content for '" . $receiverName . "' from " . $receiverSourceProcessed . "\n";
+			
+				  				$receiverCacheKey = $receiverSourceProcessed . '_' . $nodeId . ($receiverPostVars ? ('_' . $receiverPostVars) : '');
+				  				
+				  				if (($cache = @self::$receiversCache [$receiverCacheKey]) !== null)
+				  					$receiverData = $cache;
+				  				else
+				  				{
+					  				$curl = new Curl ($receiverSourceProcessed);
+					  				$curl -> setHeaders (array ('Content-type: application/json'));
+					  				
+					  				if ($receiverPostVarsProcessed)
+					  					$receiverPostWholeContent ? $curl -> setPostContent ($receiverPostVarsProcessed) : $curl -> setPostAttributes (json_decode ($receiverPostVarsProcessed));
+					  				
+					  				self::$receiversCache [$receiverCacheKey] = $receiverData = $curl -> retrieve ();
+				  				}
+				  				
+				  				if ($receiverSourceParser == self::ReceiverParser_HTML_Regex)
+				  				{
+				  					preg_match ($receiverSourceVar, $receiverData, $matches);
+				  					
+				  					if ($receiverSourceMatcher)
+				  						$receiverSourceVarValue = $receiverSourceMatcher ($matches, $this -> config, $feed, $node);
+				  					else
+				  						$receiverSourceVarValue = $matches [1];
+				  				}
+				  				else
+				  				if ($receiverSourceParser == self::ReceiverParser_JSON)
+					  				$receiverSourceVarValue	= JsonStore::get (json_decode ($receiverData, true), $receiverSourceVar);
+					  			
+				  				
+				  				if (is_string ($receiverSourceVarValue))
+				  					$receiverSourceVarValue = trim ($receiverSourceVarValue);
+				  				
+		
+				  				if ($sourceVarCallback)
+				  					$sourceVarCallback ($receiverSourceVarValue);
+		  					}
+		  					else
+		  						$receiverSourceVarValue = $receiverValueOverride;
+		  					
+		  					break;
+		  				
+  						case self::Content_FileDownload:
+  							
+  							$receiverDownloadTarget					= @$receiverConfig ['downloadTarget'];
+
+  							$receiverDownloadTarget = preg_replace_callback ('/#\{{1,1}([^\}]+)\}/',
+  								create_function ('$matches', 'return FeedsPlusHTTPFetcherResult::$temporaryNode [$matches [1]];'),
+  								$receiverDownloadTarget
+  							);
+  								
+  							$receiverSource = preg_replace_callback ('/#\{{1,1}([^\}]+)\}/',
+  								create_function ('$matches', 'return FeedsPlusHTTPFetcherResult::$temporaryNode [$matches [1]];'),
+  								$receiverSource
+  							);
+  							
+  							global $conf, $base_path;
+  							
+  							$fileHandle		= fopen ($conf ['file_public_path'] . '/' . $receiverDownloadTarget, 'w+');
+  							
+  							$curl					= curl_init ($receiverSource);
+  							
+  							curl_setopt	($curl, CURLOPT_TIMEOUT,				50);
+  							curl_setopt	($curl, CURLOPT_FILE,						$fileHandle);
+  							curl_setopt	($curl, CURLOPT_FOLLOWLOCATION, true);
+  							curl_setopt ($curl, CURLOPT_REFERER,				'http://zulutrade.com/Performance.aspx');
+  							curl_exec		($curl);
+  							curl_close	($curl);
+  							
+  							fclose			($fileHandle);
+  							
+  							$receiverSourceVarValue = 'public://' . $receiverDownloadTarget;
+
+  							break;
   					}
-  					else
-  						$receiverSourceVarValue = $receiverValueOverride;
 	  				
+  					
 	  				JsonStore::add ($sourceJSON, $JSONStorePath, $receiverSourceVarValue, $receiverName);
   				}
 	 			}
