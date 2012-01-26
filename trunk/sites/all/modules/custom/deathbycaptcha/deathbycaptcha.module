@@ -64,6 +64,27 @@
 		}
 	}
 	
+	function deathbycaptcha_solve_curl_url ($curl, $url, &$captchaId)
+	{
+		$fileHandle = tmpfile ();
+		
+		curl_setopt ($curl, CURLOPT_URL,						$url);
+		curl_setopt	($curl, CURLOPT_TIMEOUT,				60);
+		curl_setopt	($curl, CURLOPT_FILE,						$fileHandle);
+		curl_setopt	($curl, CURLOPT_FOLLOWLOCATION, 1);
+		curl_exec		($curl);
+		
+		rewind			($fileHandle);
+		
+		$content = stream_get_contents ($fileHandle);
+		
+		curl_setopt	($curl, CURLOPT_FILE,						STDOUT);
+		
+		fclose			($fileHandle);
+		
+		return deathbycaptcha_solve_b64_image (base64_encode ($content), $captchaId);
+	}
+	
 	/**
 	 * Returns text representation of captcha pointed by URL. If will fail, please execute this function one more time with same $captchaId variable
 	 * @param string $url
@@ -114,7 +135,7 @@
 			
 			if ($captcha = $client -> upload ('base64:' . $content))
 			{
-				while ($timeout -= 5 > sleep (5)) // Seconds between checks
+				while (($timeout -= 5) > sleep (5)) // Seconds between checks
 				{
 					if ($text = $client -> get_text ($captcha ['captcha']))
 					// Captcha recognized

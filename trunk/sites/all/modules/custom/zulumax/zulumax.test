@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * Simpletest unit test for "ZuluMax" module
+ */
+
+class zulumaxTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implements getInfo().
+   */
+  public static function getInfo() {
+    return array (
+      'name' => t('ZuluMax test'),
+      'description' => t('Tests related to zulumax module'),
+      'group' => t('ZuluMax'),
+    );
+  }
+
+  public function setUp()
+	{
+    parent::setUp ('deathbycaptcha');
+  }
+
+}
+
+?>

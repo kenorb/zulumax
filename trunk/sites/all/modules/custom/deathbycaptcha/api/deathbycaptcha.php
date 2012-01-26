@@ -97,8 +97,8 @@ abstract class DeathByCaptcha_Client
 {
     const API_VERSION = 'DBC/PHP v4.1.1';
 
-    const DEFAULT_TIMEOUT = 60;
-    const POLLS_INTERVAL = 5;
+    const DEFAULT_TIMEOUT = 180;
+    const POLLS_INTERVAL = 4;
 
 
     /**
@@ -341,7 +341,7 @@ class DeathByCaptcha_HttpClient extends DeathByCaptcha_Client
 
             curl_setopt_array($this->_conn, array(
                 CURLOPT_TIMEOUT => self::DEFAULT_TIMEOUT,
-                CURLOPT_CONNECTTIMEOUT => (int)(self::DEFAULT_TIMEOUT / 4),
+                CURLOPT_CONNECTTIMEOUT => (int)(self::DEFAULT_TIMEOUT),
                 CURLOPT_HEADER => false,
                 CURLOPT_RETURNTRANSFER => true,
                 CURLOPT_FOLLOWLOCATION => true,
@@ -572,7 +572,7 @@ class DeathByCaptcha_SocketClient extends DeathByCaptcha_Client
                 throw new DeathByCaptcha_IOException(
                     'Failed connecting to ' . self::HOST . ":{$port}: fsockopen(): [{$errno}] {$error}"
                 );
-            } else if (!@stream_set_timeout($sock, self::DEFAULT_TIMEOUT / 4)) {
+            } else if (!@stream_set_timeout($sock, self::DEFAULT_TIMEOUT)) {
                 fclose($sock);
                 throw new DeathByCaptcha_IOException(
                     'Failed setting socket timeout'

@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * Simpletest unit test for "TOR" module
+ */
+
+class TORTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implements getInfo().
+   */
+  public static function getInfo() {
+    return array (
+      'name' => t ('TOR test'),
+      'description' => t('Tests related to tor module'),
+      'group' => t ('TOR'),
+    );
+  }
+
+  public function setUp()
+	{
+    parent::setUp ('tor');
+  }
+
+}
+
+?>

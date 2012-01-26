@@ -1,0 +1,99 @@
+<?php 
+
+	function zulumax_action_info ()
+	{
+		return array
+		(
+	    'zulumax_create_zulutrade_account' => array
+	    (
+	      'label'					=> t('Create ZuluTrade account'),
+	      'type'					=> 'node',
+	      'configurable'	=> FALSE,
+	      'triggers'			=> array ('any'),
+			),
+		);
+	}
+	
+	function zulumax_create_zulutrade_account (&$entity, $context = array())
+	{
+		require_once 'zulumax.node-demo.inc';
+
+		zulumax_node_demo_create ($entity, true);
+	}
+	
+
+
+	function zulumax_demo_node_validate (&$form, &$form_state)
+	{
+		$email = &$form_state ['values'] ['field_email'] ['und'] [0] ['value'];
+		
+		$email = str_replace ('*', uniqid ('', true), $email);
+	}
+	 
+	function zulumax_form_alter (&$form, &$form_state, $form_id)
+	{
+		if ($form_id != 'demo_node_form')
+			return;
+		
+		$form ['#validate'] [] = 'zulumax_demo_node_validate';
+	}
+
+	/**
+	 * Generates configuration link in the /admin/config page
+	 * @return array
+	 */
+	function zulumax_menu ()
+	{
+		$items = array (
+			'admin/config/zulumax' => array
+			(
+			  'title'							=> 'ZuluMax',
+			 	'access arguments'	=> array ('configure zulumax'),
+				'page callback'			=> 'zulumax_admin_config_page',
+			 	'weight'						=> -101,
+			 	'position'					=> 'right',
+				'file'							=> 'zulumax.admin.inc'
+			),
+		
+			'admin/config/zulumax/settings' => array
+			(
+			  'title'							=> 'ZuluMax',
+			 	'access arguments'	=> array ('configure zulumax'),
+				'page callback'			=> 'zulumax_admin_config_page',
+				'file'							=> 'zulumax.admin.inc'
+		  )
+		);
+	
+		return $items;
+	}
+
+	/**
+	 * Retrieves configuration from the database
+	 * @return stdClass Configuration object
+	 */
+	function zulumax_get_config ()
+	{
+		return (object)array (
+//		'userName'			=> variable_get ('zulumax_userName',			null),
+		);
+	}
+	
+	/**
+	 * Called when module is being enabled
+	 */
+	function zulumax_enable ()
+	{
+		// Nothing here
+	}
+
+	/**
+	 * Declares permissions used by module
+	 * @return array
+	 */
+	function zulumax_permission ()
+	{
+		return array ('configure zulumax' => array ('title' => t('Change ZuluMax settings')));
+	}
+	
+
+?>
