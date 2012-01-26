@@ -1,0 +1,7 @@
+name = Death by Captcha
+description = Adds support for DeathByCaptcha captcha solver
+core = 7.x
+version = 0.1-dev
+files[] = deathbycaptcha.test
+package = Death by Captcha
+

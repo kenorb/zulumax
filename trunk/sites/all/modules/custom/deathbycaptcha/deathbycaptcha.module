@@ -1,0 +1,158 @@
+<?php 
+
+	require_once dirname (__FILE__) . '/api/deathbycaptcha.php';
+	
+	/**
+	 * Generates configuration link in the /admin/config page
+	 * @return array
+	 */
+	function deathbycaptcha_menu ()
+	{
+		$items = array (
+			'admin/config/deathbycaptcha' => array
+			(
+			  'title'							=> 'Death by Captcha',
+			 	'access arguments'	=> array ('configure deathbycaptcha'),
+				'page callback'			=> 'deathbycaptcha_admin_config_page',
+			 	'weight'						=> -100,
+			 	'position'					=> 'right',
+				'file'							=> 'deathbycaptcha.admin.inc'
+			),
+		
+			'admin/config/deathbycaptcha/settings' => array
+			(
+			  'title'							=> 'Death by Captcha',
+			 	'access arguments'	=> array ('configure deathbycaptcha'),
+				'page callback'			=> 'deathbycaptcha_admin_config_page',
+				'file'							=> 'deathbycaptcha.admin.inc'
+		  )
+		);
+	
+		return $items;
+	}
+
+	/**
+	 * Retrieves configuration from the database
+	 * @return stdClass Configuration object
+	 */
+	function deathbycaptcha_get_config ()
+	{
+		return (object)array (
+			'userName'			=> variable_get ('deathbycaptcha_userName',			null),
+			'userPassword'	=> variable_get ('deathbycaptcha_userPassword',	null),
+			'timeout'				=> variable_get ('deathbycaptcha_timeout',				60)
+		);
+	}
+	
+	
+	/**
+	 * Checks account existence. Returns null if failed or account balance in US dollars as float
+	 * @param string $userName
+	 * @param string $userPassword
+	 */
+	function deathbycaptcha_check_credentials ($userName, $userPassword)
+	{
+		try
+		{
+			$client = new DeathByCaptcha_SocketClient ($userName, $userPassword);
+			
+			return $client -> balance / 100.0;
+		}
+		catch (DeathByCaptcha_AccessDeniedException $e)
+		{
+			return null;
+		}
+	}
+	
+	/**
+	 * Returns text representation of captcha pointed by URL. If will fail, please execute this function one more time with same $captchaId variable
+	 * @param string $url
+	 * @param string $captchaId A reference to the captcha. Used to mark captcha as invalid when function is executed second time with unchanged $captchaId
+	 * @return string|null String if succeded or null elsewhere
+	 */
+	function deathbycaptcha_solve_url ($url, &$captchaId)
+	{
+		$handle	= fopen ($url, "rb");
+		
+		$b64		= base64_encode (stream_get_contents ($handle));
+		
+		fclose ($handle);
+		
+		return deathbycaptcha_solve_b64_image ($b64, $captchaId);
+	}
+	
+	/**
+	 * Returns text representation of captcha pointed by image given as base64 string. If will fail, please execute this function one more time with same $captchaId variable
+	 * @param string $content
+	 * @param string $captchaId A reference to the captcha. Used to mark captcha as invalid when function is executed second time with unchanged $captchaId
+	 * @return string|null String if succeded or null elsewhere
+	 */
+	function deathbycaptcha_solve_b64_image ($content, &$captchaId)
+	{
+		$configuration	= deathbycaptcha_get_config ();
+		
+		$timeout				= $configuration -> timeout;
+
+		try
+		{
+			$client		= new DeathByCaptcha_SocketClient ($configuration -> userName, $configuration -> userPassword);
+			
+			$balance	= $client -> balance / 100.0;
+			
+			if ($balance <= 0.10)
+				$orderCaptchasLink = '<a href="http://deathbycaptcha.com/user/order">Order more CAPTCHAs</a>';
+			
+			if ($balance <= 0.10)
+				watchdog (t('Death by Captcha'), "There are no funds or almost no funds on the account (Currently $%balance). Please order more captchas ASAP", array ('%balance' => number_format ($balance, 2)), WATCHDOG_ERROR, $orderCaptchasLink);
+			else
+			if ($balance <= 1.00)
+				watchdog (t('Death by Captcha'), "Low amount of funds on the account (Currently $%balance). Please consider ordering more captchas", array ('%balance' => number_format ($balance, 2)), WATCHDOG_WARNING, $orderCaptchasLink);
+			
+			if (isset ($captchaId))
+			// When function is called second time, it will report the captchaId as not recognized
+				$client -> report ($captchaId);
+			
+			if ($captcha = $client -> upload ('base64:' . $content))
+			{
+				while ($timeout -= 5 > sleep (5)) // Seconds between checks
+				{
+					if ($text = $client -> get_text ($captcha ['captcha']))
+					// Captcha recognized
+					{
+						$captchaId = $captcha ['captcha'];
+						
+						return $text;
+					}
+				}
+			}
+		}
+		catch (DeathByCaptcha_AccessDeniedException $e)
+		{
+			watchdog (t('Death by Captcha'), "Access denied for user '%userName' and password '%userPassword'", array (
+				'%userName'			=> $configuration -> userName,
+				'%userPassword'	=> $configuration -> userPassword
+			), WATCHDOG_ERROR, '<a href="/admin/config/deathbycaptcha/settings">Open Death by Captcha settings</a>');
+			
+			return null;
+		}
+	}
+	
+	/**
+	 * Called when module is being enabled
+	 */
+	function deathbycaptcha_enable ()
+	{
+		// Nothing here
+	}
+
+	/**
+	 * Declares permissions used by module
+	 * @return array
+	 */
+	function deathbycaptcha_permission ()
+	{
+		return array ('configure deathbycaptcha' => array ('title' => t('Change Death by Captcha settings')));
+	}
+	
+
+?>

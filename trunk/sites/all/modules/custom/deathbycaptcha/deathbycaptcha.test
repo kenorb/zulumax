@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * Simpletest unit test for "Death by Captcha" module
+ */
+
+class DeathByCaptchaTestCase extends DrupalWebTestCase {
+
+  /**
+   * Implements getInfo().
+   */
+  public static function getInfo() {
+    return array (
+      'name' => t('Death by Captcha test'),
+      'description' => t('Tests related to deathbycaptcha module'),
+      'group' => t('Death by Captcha'),
+    );
+  }
+
+  public function setUp()
+	{
+    parent::setUp ('deathbycaptch');
+  }
+
+}
+
+?>
