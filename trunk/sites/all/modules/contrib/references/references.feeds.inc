@@ -12,7 +12,6 @@
  * Implements hook_feeds_parser_sources_alter().
  */
 function node_reference_feeds_parser_sources_alter(&$sources, $content_type) {
-
   if (!empty($content_type)) {
     $fields = field_info_fields();
     foreach ($fields as $field) {
@@ -44,7 +43,6 @@ function node_reference_feeds_get_source(FeedsSource $source, FeedsParserResult 
   if ($node = node_load($source->feed_nid)) {
     $results = array();
     $field = substr($key, 22);
-
     if (!empty($node->{$field}['und'])) {
       foreach ($node->{$field}['und'] as $delta => $value) {
         $results[] = $value['nid'];
