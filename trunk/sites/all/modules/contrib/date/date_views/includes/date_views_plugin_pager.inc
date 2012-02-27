@@ -132,7 +132,7 @@ class date_views_plugin_pager extends views_plugin_pager {
 
     // Bring the argument information into the view so our theme can access it.
     $i = 0;
-    foreach ($this->view->argument as $id => $argument) {
+    foreach ($this->view->argument as $id => &$argument) {
       if (date_views_handler_is_date($argument, 'argument')) {
 
         // If the argument is empty, nothing to do. This could be from
@@ -154,6 +154,9 @@ class date_views_plugin_pager extends views_plugin_pager {
           $argument->date_range = $argument->date_handler->arg_range($value);
           $argument->min_date = $argument->date_range[0];
           $argument->max_date = $argument->date_range[1];
+          // $argument->is_default works correctly for normal arguments, but does not
+          // work correctly if we are swapping in a new value from the pager.
+          $argument->is_default = FALSE;
         }
         if (empty($this->view->date_info)) $this->view->date_info = new stdClass();
         $this->view->date_info->granularity = $argument->date_handler->granularity;
@@ -192,7 +195,6 @@ class date_views_plugin_pager extends views_plugin_pager {
                 // min and max dates as placeholders.
                 $date = ($count == 2) ? $this->view->date_info->min_date : $this->view->date_info->max_date;
                 $next_placeholder = array_shift($placeholders);
-                //dsm('resetting '. $placeholder . ' from ' . $next_placeholder . ' to '. $date->format($format));
                 $this->view->query->where[$group]['conditions'][$delta]['value'][$placeholder] = $date->format($format);
                 $count--;
               }
