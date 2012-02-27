@@ -78,7 +78,7 @@
 		
 		$content = stream_get_contents ($fileHandle);
 		
-		curl_setopt	($curl, CURLOPT_FILE,						STDOUT);
+		curl_setopt ($curl, CURLOPT_RETURNTRANSFER,	0);
 		
 		fclose			($fileHandle);
 		
