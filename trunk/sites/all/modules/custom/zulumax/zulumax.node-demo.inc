@@ -10,6 +10,10 @@
 	 */
 	function zulumax_node_demo_create ($vars, $isNew)
 	{
+		set_time_limit (3 * 60);
+		
+		/*
+		
 		require_once 'sites/all/modules/custom/deathbycaptcha/deathbycaptcha.module';
 		
 		$moduleEnabledTOR = module_exists ('tor');
@@ -27,7 +31,7 @@
 
 		$headers					= array (
 			'User-Agent: Mozilla/5.0 (Windows NT 6.1; WOW64; rv:9.0.1) Gecko/20100101 Firefox/9.0.1',
-			'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+			'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,* / *;q=0.8',
 			'Accept-Language: en-us;q=0.7,en;q=0.3',
 			'Accept-Charset: utf-8;q=0.7,*;q=0.7',
 			'Content-type: application/x-www-form-urlencoded',
@@ -70,7 +74,7 @@
 		
 		$captchaURL		= 'http://zulutrade.com/' . $matches [1];
 		
-		$captchaText	= '12345';//deathbycaptcha_solve_curl_url ($curl, $captchaURL, $captchaId);
+		$captchaText	= deathbycaptcha_solve_curl_url ($curl, $captchaURL, $captchaId);
 		
 		echo 'Captcha solved: <' . $captchaText . "> from " . $captchaURL . "\n";
 		
@@ -100,7 +104,7 @@
 		
 		$postFields = implode ('&', $fields);
 		
-		curl_setopt ($curl, CURLOPT_URL,						'http://zulutrade.com/SignUp_Demo.aspx');
+		curl_setopt ($curl, CURLOPT_URL,						'http://zulutrade.com/SignUp_Demo.aspx?Lang=en');
 		curl_setopt ($curl, CURLOPT_HTTPHEADER,			array_merge ($headers, array ('Content-length: ' . strlen ($postFields))));
  		curl_setopt ($curl, CURLOPT_POST,						1);
  		curl_setopt ($curl, CURLOPT_POSTFIELDS,			$postFields);
@@ -108,17 +112,14 @@
  		curl_setopt ($curl, CURLOPT_FOLLOWLOCATION,	1);
  		curl_setopt ($curl, CURLOPT_RETURNTRANSFER,	1);
  		
- 		//$content = curl_exec ($curl);
- 		$content = '';
- 		
- 		file_put_contents ('C:\test.htm', $content);
+ 		$content = curl_exec ($curl);
  		
 		curl_close ($curl);
 		
 		
-		/*
-		 * Retrieving activation link
-		 */
+		//
+		// Retrieving activation link
+		//
 		
 		$curl = curl_init ();
 		
@@ -146,8 +147,6 @@
 			curl_setopt ($curl, CURLOPT_URL, 'http://niepodam.pl/wiadomosci/' . $messageId);
 			$content = curl_exec ($curl);
 
-			file_put_contents ('C:\ss.htm', $content);
-			
 			preg_match ('%Username:.*?>([A-Z0-9]+)<%si', $content, $matches);
 			$finalUserName = $matches [1];
 			
@@ -155,7 +154,7 @@
 			$finalUserPassword = $matches [1];
 
 			// Finding activation link
-			preg_match ('%"(http://zulutrade\.com/SignUp_Activation\.aspx.*?)"%si', $content, $matches);
+			preg_match ('%"(http://zulutrade\.com/SignUp Activation\.aspx.*?)"%si', $content, $matches);
 			$activationLink = $matches [1];
 				
 			// Opening activation link
@@ -165,14 +164,22 @@
 			break;
 		}
 		
-		$vars -> field_user_name			= array ('und' => array ('value' => $finalUserName));
-		$vars -> field_user_password	= array ('und' => array ('value' => $finalUserPassword));
+		$vars -> field_user_name			= array ('und' => array (array ('value' => $finalUserName)));
+		$vars -> field_user_name			= array ('und' => array (array ('value' => $finalUserPassword)));
 		
-		node_save ($vars);
+		*/
 		
-		curl_close ($curl);
-
+		$vars -> field_user_name			= array ('und' => array (array ('value' => 'username')));
+		$vars -> field_user_password	= array ('und' => array (array ('value' => 'password')));
+		
+		field_attach_presave ('node',	$vars);
+		
+		field_attach_update ('node',	$vars);
+		
 		workflow_transition ($vars, WorkflowDemoStateActivated);
+		
+		//curl_close ($curl);
+		
 	}
 
 ?>
