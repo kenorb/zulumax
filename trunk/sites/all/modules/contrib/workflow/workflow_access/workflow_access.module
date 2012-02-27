@@ -188,7 +188,7 @@ function workflow_access_workflow($op, $old_sid, $sid, $node) {
   // NOTE: Any module that sets node access rights on insert will hit this situation.
   //
   if ($old_state = workflow_get_workflow_states_by_sid($old_sid)) {
-    if ($op == 'transition post' && $old_sid != $sid && $old_state->state !== '(creation)') {
+      if ($op == 'transition post' && $old_sid != $sid && ! $node->is_new ) {
       node_access_acquire_grants($node);
     }
   }
