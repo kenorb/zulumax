@@ -8,6 +8,12 @@ class FeedsPlusFeedsSource extends FeedsSource
 {
 	protected $nid;
 	protected $alreadySaved;
+	protected $fetcherResultCopy;
+	
+	public function __construct ($a, $b)
+	{
+		parent::__construct ($a, $b);
+	}
 	
 	public function getImporterConfig ()
 	{
@@ -32,7 +38,6 @@ class FeedsPlusFeedsSource extends FeedsSource
 	{
 		return $this -> nid;
 	}
-	
 }
 
 class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
@@ -71,20 +76,27 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   	
   	$curl = new Curl ($url);
   	$curl -> setHeaders (array ('Content-type: application/json;charset=UTF-8'));
-
-  	if ($customFeedOutput)
-  		$retrieved = $customFeedOutput;
+  	
+  	if (!$customFeedOutput && $url == 'http://zulutrade.com/WebServices/Performance.asmx/SearchProviders' && false)
+  	//$retrieved = '{"d":[{"__type":"Z.P","id":20558,"bid":228145,"n":"FxTraderX","n2":"FxTraderX","cc":"UA","cn":"Ukraine","bl":"image/common/brokers/AAAFx-small.png","e":0,"l":2,"r":0,"f":0,"b":0,"uid":-1,"c":0,"ar":3,"ra":4,"pp":"12.2K","t":1745,"ap":7,"w":58,"at":"1d","tw":85,"dc":"10","dp":"1.3K","fo":639,"la":"8 godziny","lo":0,"s":"Use .3 mini lots to every 1000 in capital with ...","mot":27,"lr":"You\u0027re in 2nd spot for a very good reason - you\u0027ve decreased your trades which is paying off - it\u0027s about profit and not losing - nice and steady every time wins the race - very well done keep it up","lru":"AAA648025F","af":230546.16,"cp":26.400000000000002,"roio":340.1,"roia":208,"ror":322.1,"nme":0}]}';
+  		$retrieved = '{"d":[]}';
   	else
   	{
-	  	if ($postVars)
-	  	{
-	  		if ($postWholeContent)
-	  			$curl -> setPostContent ($postVars);
-	  		else
-	  			$curl -> setPostAttributes (json_decode ($postVars));
-	  	}
 	
-	  	$retrieved = $curl -> retrieve ();
+	  	if ($customFeedOutput)
+	  		$retrieved = $customFeedOutput;
+	  	else
+	  	{
+		  	if ($postVars)
+		  	{
+		  		if ($postWholeContent)
+		  			$curl -> setPostContent ($postVars);
+		  		else
+		  			$curl -> setPostAttributes (json_decode ($postVars));
+		  	}
+		
+		  	$retrieved = $curl -> retrieve ();
+	  	}
   	}
   	
   	if ($customReceivers)
@@ -97,9 +109,10 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   			$sourceJSON = json_decode ($retrieved, true);
   			
   			$nodes = jsonPath ($sourceJSON, $parserContextPath);
-
-  			$nodes = array ($nodes [0]);
-
+  			
+  			if (!is_array ($nodes))
+  				$nodes = array ();
+  				
   			foreach ($nodes as $nodeId => $node)
   				JsonStore::add ($sourceJSON, '$.d[' . $nodeId . '].0', md5 ($node ['id']), 'guid');
   			
@@ -114,6 +127,10 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   				$receiverPostWholeContent		= @$receiverConfig ['postWholeContent'];
   				$sourceVarCallback					= @$receiverConfig ['sourceVarCallback'];
   				$receiverValueOverride			= @$receiverConfig ['value'];
+  				$skip												= @$receiverConfig ['skip'];
+  				 
+  				if ($skip)
+  					continue;
   				
   				if (!$receiverSourceContent)
   					$receiverSourceContent = self::Content_Text;
@@ -123,6 +140,10 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   					$JSONStorePath					= str_replace ('.*', '[' . $nodeId . '].0', $parserContextPath);
   					
   					self::$temporaryNode = $node;
+  					
+  					$receiverPostVarsProcessed			= null;
+  					$receiverSourceProcessed				= null;
+  					$receiverValueOverrideProcessed	= null;
   					
   					if ($receiverPostVars)
   						$receiverPostVarsProcessed = preg_replace_callback ('/#\{{1,1}([^\}]+)\}/',
@@ -137,7 +158,7 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   						);
   					
   					if (isset ($receiverValueOverride))
-							$receiverValueOverride = preg_replace_callback ('/#\{{1,1}([^\}]+)\}/',
+							$receiverValueOverrideProcessed = preg_replace_callback ('/#\{{1,1}([^\}]+)\}/',
   							create_function ('$matches', 'return FeedsPlusHTTPFetcherResult::$temporaryNode [$matches [1]];'),
   							$receiverValueOverride
   						);
@@ -146,7 +167,7 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   					{
   						case self::Content_Text:
   					
-		  					if (!$receiverValueOverride)
+		  					if (!$receiverValueOverrideProcessed)
 		  					{
 				  				echo "* Trying to receive content for '" . $receiverName . "' from " . $receiverSourceProcessed . "\n";
 			
@@ -187,7 +208,7 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
 				  					$sourceVarCallback ($receiverSourceVarValue);
 		  					}
 		  					else
-		  						$receiverSourceVarValue = $receiverValueOverride;
+		  						$receiverSourceVarValue = $receiverValueOverrideProcessed;
 		  					
 		  					break;
 		  				
@@ -200,7 +221,7 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   								$receiverDownloadTarget
   							);
   								
-  							$receiverSource = preg_replace_callback ('/#\{{1,1}([^\}]+)\}/',
+  							$receiverSourceFinal = preg_replace_callback ('/#\{{1,1}([^\}]+)\}/',
   								create_function ('$matches', 'return FeedsPlusHTTPFetcherResult::$temporaryNode [$matches [1]];'),
   								$receiverSource
   							);
@@ -209,7 +230,9 @@ class FeedsPlusHTTPFetcherResult extends FeedsFetcherResult
   							
   							$fileHandle		= fopen ($conf ['file_public_path'] . '/' . $receiverDownloadTarget, 'w+');
   							
-  							$curl					= curl_init ($receiverSource);
+  							echo $receiverSourceFinal . "\n";
+  							
+  							$curl					= curl_init ($receiverSourceFinal);
   							
   							curl_setopt	($curl, CURLOPT_TIMEOUT,				50);
   							curl_setopt	($curl, CURLOPT_FILE,						$fileHandle);
@@ -262,7 +285,7 @@ class FeedsPlusHTTPFetcher extends FeedsHTTPFetcher
 	      '#description'		=> t('Enter a feed URL.'),
 	      '#default_value'	=> isset ($source_config ['source']) ? $source_config['source'] : '',
 	      '#maxlength'			=> null,
-	      '#required'				=> true
+	      '#required'				=> false
 	     ),
 	     
 			'postWholeContent' => array (
@@ -280,7 +303,7 @@ class FeedsPlusHTTPFetcher extends FeedsHTTPFetcher
 	      '#description'		=> t('POST content or POST variables in JSON format, e.g.: {userId:3,userName:"Sonic"}'),
 	      '#default_value'	=> isset ($source_config ['postVars']) ? $source_config ['postVars'] : '',
 	      '#maxlength'			=> null,
-	      '#required'				=> true
+	      '#required'				=> false
 			)
 		);
 		

@@ -16,9 +16,9 @@
 	$lockFilePath								= sys_get_temp_dir () . 'zulumax.lock';
 	
 	$importer = new SignalProvidersFeedImporter (array (
-		'itemsPerPage'					=> 1,
+		'itemsPerPage'					=> 20,
 		'pagesToImportPerCRON'	=> 1,
-		'pagesToImportPerSite'	=> 1
+		'pagesToImportPerSite'	=> 2
 	));
 	
 	
@@ -46,7 +46,7 @@
 
 	
 	$importer -> import ();
-	
+	$importer -> link ();
 	$importer -> finalize ();
 	
 	

@@ -8,16 +8,41 @@
 	{
 		protected $receivers;
 		
+		public static function addAka ($left, $right)
+		{
+			self::$akas [$left] [] = $right;
+		}
+		
+		public static function link ()
+		{
+			foreach (self::$akas as $left => $rights)
+			{
+				foreach ($rights as $right)
+				{
+					echo $left . " links with " . $right . "\n";
+					
+					$leftId		= db_query ("SELECT entity_id FROM {feeds_item} WHERE guid = '$left'  LIMIT 1") -> fetchField ();
+					$rightId	= db_query ("SELECT entity_id FROM {feeds_item} WHERE guid = '$right' LIMIT 1") -> fetchField ();
+
+					db_query ($query = "
+						REPLACE INTO {field_data_field_known_as} (entity_type, bundle, deleted, entity_id, revision_id, language, delta, field_known_as_nid)
+						SELECT 'node', 'signal_provider', 0, $leftId, 0, 'und', $rightId, $rightId
+					");
+				}
+			}
+		}
+		
 		public function __construct ($config)
 		{
 			parent::__construct ($config);
 			
 			$this -> receivers = array (
 			
-				'tradingHistoryCSV'		=> array (
-					'source'						=> 'http://zulutrade.com/Export.ashx?d=providertrades&f=csv&id=#{id}&c=&df=1984-09-09&dt=2013-01-26',
-					'sourceContent'			=> FeedsPlusHTTPFetcherResult::Content_FileDownload,
-					'downloadTarget'		=> 'CSV-SP/#{id}.csv',
+				'-id'									=> array (
+					'source'						=> 'http://127.0.0.1/',
+					'sourceVar'					=> '/^NOTHING$/',
+					'sourceMatcher'			=> create_function ('&$var, $config, $feed, &$node', 'FeedImporter::setAlreadyImported ($node ["id"], true);'),
+					'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_HTML_Regex
 				),
 				
 				'aka'									=> array (
@@ -27,33 +52,39 @@
 					'sourceMatcher'			=> create_function ('&$var, $config, $feed, &$node', '
 
 							preg_match_all ("/\\?pid=([0-9]+)/i", $var [1], $matches);
-
-							$references = array ();
 							
 							if (@$matches [1])
 							{
 								foreach ($matches [1] as $id)
 								{
-									$guid = $config ["importer"] -> getAlreadyImported ($id);
-									
-									if ($guid === null)
-									{
-										$guid = md5 ($id);
-										
-										$config ["importer"] -> setAlreadyImported ($id, $guid);
+									$config ["importer"] -> addAka ($node ["id"], $id);
 			
+									if (!FeedImporter::getAlreadyImported ($id))
+									{
+										echo "Not yet imported $id, adding to the queue\n";
+										
+										FeedImporter::setAlreadyImported ($id, true);
+		
 										$config ["importer"] -> importCustomInput ("{\"d\":[{\"id\":" . $id . "}]}");
 									}
-									
-									if (!in_array ($guid, $references))
-										$references [] = $guid;
 								}
 							}
 							
-							return $references;
+							return array ();
 						')
 				),
-
+				
+				'guid'								=> array (
+					'value'							=> '#{id}'
+				),
+			
+				'tradingHistoryCSV'		=> array (
+					'source'						=> 'http://zulutrade.com/Export.ashx?d=providertrades&f=csv&id=#{id}&c=&df=1984-09-09&dt=2013-01-26',
+					'sourceContent'			=> FeedsPlusHTTPFetcherResult::Content_FileDownload,
+					'downloadTarget'		=> 'CSV-SP/#{id}.csv',
+					'skip'							=> true
+				),
+				
 				'url'									=> array (
 					'value'							=> 'http://zulutrade.com/TradeHistoryIndividual.aspx?pid=#{id}&Lang=en',
 				),
@@ -245,36 +276,49 @@
 					'postWholeContent'	=> true,
 					'sourceVar'					=> 'd.tr',
 					'sourceParser'			=> FeedsPlusHTTPFetcherResult::ReceiverParser_JSON
-				),
+				)
+
 			);
 		}
 
 		public function importCustomInput ($customFeedOutput)
 		{
-				$feed = feeds_source ('signal_providers');
-				
-				$feed -> addImporterConfig (array ('content_type' => 'signal_provider'));
-				
-				$feed -> addConfig (array (
+			FeedImporter::schedule ('signal_providers', array (
 					'FeedsPlusHTTPFetcher' 		=> array (
-						'feed'									=> $feed,
 						'context'								=> array (),
+						'source'								=> 'http://zulutrade.com/WebServices/Performance.asmx/SearchProviders',
+						'postVars'							=> '{"searchFilter":{"SortExpression":0,"SortDirection":0,"Page":' . $currentSPPage . ',"PageSize":' . $this -> config ['itemsPerPage'] . ',"ProviderName":"","CountryCode":"","IsLive":false,"WinningTrades":false,"TradingWeeks":false,"Top100":false,"ApprovedPhoto":false,"RecentTrading":false,"Rated":false,"LiveFollowers":false,"EconomicEvents":false,"HasVideos":false,"IsBookmarked":false,"NotTradingExotics":false,"PipsFrom":"","PipsTo":"","TradesFrom":"","TradesTo":"","AvgPipsFrom":null,"AvgPipsTo":null,"WinningTradesFrom":null,"WinningTradesTo":null,"WeeksFrom":null,"WeeksTo":null,"MaxDDFrom":null,"MaxDDTo":null,"MaxDDPipsFrom":null,"MaxDDPipsTo":null,"CorrelationFrom":null,"CorrelationTo":null,"FollowersFrom":null,"FollowersTo":null,"MaxOpenTradesFrom":null,"MaxOpenTradesTo":null,"LowestPipValueFrom":null,"LowestPipValueTo":null,"BestTradeFrom":null,"BestTradeTo":null,"AvgTradeTimeFrom":null,"AvgTradeTimeTo":null,"AverageSlippageFrom":null,"AverageSlippageTo":null,"Timeframe":null,"ProfitableAccount":null,"LosingAccount":null,"Relation":null,"CurrencyPairs":null,"AffiliateID":-1}}',
+						'postWholeContent'			=> true,
 						'parser'								=> 'JSON',
 						'overrideOutput'				=> $customFeedOutput,
 						'importer'							=> $this,
-						'customReceivers' 			=> $this -> receivers
+						'customReceivers' 			=> $this -> receivers,
+						'overrideOutput'				=> $customFeedOutput
 					)
 				));
-				
-				while ($feed -> import () != FEEDS_BATCH_COMPLETE);
-				
-				$feedResult = $feed -> getResult ();
-				
-				$feed -> setNid (db_query ("SELECT entity_id FROM z_feeds_item WHERE url = :URL", array (':URL' => $feedResult ['url'])) -> fetchField ());
-				
-				$result = $feed -> getResult ();
-				
-				return $result ['guid'];
+		}
+
+		public function importCustomOutput ($customFeedOutput = null)
+		{
+			$feed = feeds_source ('signal_providers');
+						
+			$feed -> addImporterConfig (array ('content_type' => 'signal_provider'));
+						
+			$feed -> addConfig (array (
+				'FeedsPlusHTTPFetcher' 		=> array (
+					'feed'									=> $feed,
+					'context'								=> array (),
+					'source'								=> 'http://zulutrade.com/WebServices/Performance.asmx/SearchProviders',
+					'postVars'							=> '{"searchFilter":{"SortExpression":0,"SortDirection":0,"Page":' . $currentSPPage . ',"PageSize":' . $this -> config ['itemsPerPage'] . ',"ProviderName":"","CountryCode":"","IsLive":false,"WinningTrades":false,"TradingWeeks":false,"Top100":false,"ApprovedPhoto":false,"RecentTrading":false,"Rated":false,"LiveFollowers":false,"EconomicEvents":false,"HasVideos":false,"IsBookmarked":false,"NotTradingExotics":false,"PipsFrom":"","PipsTo":"","TradesFrom":"","TradesTo":"","AvgPipsFrom":null,"AvgPipsTo":null,"WinningTradesFrom":null,"WinningTradesTo":null,"WeeksFrom":null,"WeeksTo":null,"MaxDDFrom":null,"MaxDDTo":null,"MaxDDPipsFrom":null,"MaxDDPipsTo":null,"CorrelationFrom":null,"CorrelationTo":null,"FollowersFrom":null,"FollowersTo":null,"MaxOpenTradesFrom":null,"MaxOpenTradesTo":null,"LowestPipValueFrom":null,"LowestPipValueTo":null,"BestTradeFrom":null,"BestTradeTo":null,"AvgTradeTimeFrom":null,"AvgTradeTimeTo":null,"AverageSlippageFrom":null,"AverageSlippageTo":null,"Timeframe":null,"ProfitableAccount":null,"LosingAccount":null,"Relation":null,"CurrencyPairs":null,"AffiliateID":-1}}',
+					'postWholeContent'			=> true,
+					'parser'								=> 'JSON',
+					'overrideOutput'				=> $customFeedOutput,
+					'importer'							=> $this,
+					'customReceivers' 			=> $this -> receivers
+				)
+			));
+		
+			while ($feed -> import () != FEEDS_BATCH_COMPLETE);
 		}
 		
 		public function import ($customFeedOutput = null)
@@ -287,7 +331,6 @@
 			if ($currentSPPage >= $this -> config ['pagesToImportPerSite'])
 				$currentSPPage = 0;
 		
-			
 			for ($page = 0; $page < $this -> config ['pagesToImportPerCRON']; $page++)
 			{
 				echo '  ZulumaxImporter: Importing SignalProvider page ' . ($currentSPPage + $page + 1) . ' up to ' . ($currentSPPage + $this -> config ['pagesToImportPerCRON']) . " from the " . ($this -> config ['pagesToImportPerSite']) . " pages allowed to import\n";
@@ -312,7 +355,16 @@
 				
 				while ($feed -> import () != FEEDS_BATCH_COMPLETE);
 				
-				$feedResult = $feed -> getResult ();
+				if (!$feed -> getResult ())
+				{
+					echo "* ZulumaxImporter: There was no more nodes to import. Next import will start from the first page\n";
+					
+					$currentSPPage = $page = 0;
+					
+					break;
+				}
+				
+				FeedImporter::doScheduledImports ();
 			}
 			
 			file_put_contents ($currentSPPagePath, $currentSPPage + $page);

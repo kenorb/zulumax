@@ -4,6 +4,8 @@
 	{
 		protected $config;
 		public static $alreadyImported;
+		public static $scheduledImports;
+		public static $akas;
 		
 		public $rootJSON;
 		
@@ -20,14 +22,48 @@
 		{
 		}
 		
-		public function setAlreadyImported ($name, $value = true)
+		public static function setAlreadyImported ($name, $value = true)
 		{
 			self::$alreadyImported [$name] = $value;
 		}
 		
-		public function getAlreadyImported ($name)
+		public static function getAlreadyImported ($name)
 		{
 			return @self::$alreadyImported [$name];
+		}
+		
+		public static function schedule ($importer, $config)
+		{
+			self::$scheduledImports [] = array (
+				'importer'				=> $importer,
+				'importerConfig'	=> $config
+			);
+		}
+		
+		public static function doScheduledImports ()
+		{
+			if (!self::$scheduledImports)
+				return;
+			
+			$importer = new SignalProvidersFeedImporter (array (
+				'itemsPerPage'					=> 1,
+				'pagesToImportPerCRON'	=> 1,
+				'pagesToImportPerSite'	=> 1
+			));
+			
+			
+			while ($schedule = reset (self::$scheduledImports))
+			{
+				array_splice (self::$scheduledImports, 0, 1);
+				
+				$importer -> importCustomOutput ($schedule ['importerConfig'] ['FeedsPlusHTTPFetcher'] ['overrideOutput']);
+			}
+			
+			self::doScheduledImports ();
+		}
+		
+		public static function link ()
+		{
 		}
 		
 		public function finalize ()
@@ -44,6 +80,8 @@
 		}
 	}
 	
-	FeedImporter::$alreadyImported = array ();
+	FeedImporter::$alreadyImported	= array ();
+	FeedImporter::$akas							= array ();
+	FeedImporter::$scheduledImports	= array ();
 
 ?>

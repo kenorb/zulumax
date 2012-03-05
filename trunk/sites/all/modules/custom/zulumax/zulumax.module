@@ -95,5 +95,10 @@
 		return array ('configure zulumax' => array ('title' => t('Change ZuluMax settings')));
 	}
 	
+	function zulumax_cron ()
+	{
+		require_once 'feed-import.php';
+	}
+	
 
 ?>
