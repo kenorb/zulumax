@@ -17,8 +17,8 @@
 	
 	$importer = new SignalProvidersFeedImporter (array (
 		'itemsPerPage'					=> 20,
-		'pagesToImportPerCRON'	=> 1,
-		'pagesToImportPerSite'	=> 2
+		'pagesToImportPerCRON'	=> 10,
+		'pagesToImportPerSite'	=> 1000000
 	));
 	
 	
