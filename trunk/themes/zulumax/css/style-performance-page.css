@@ -1,10 +1,15 @@
-.performance-page-table										{ border-collapse: separate; }
-.performance-page-table > tbody > tr > td					{ background: none; border: 0px; }
-.performance-page-table > tbody > tr						{ background: -moz-linear-gradient(#EEEEEE, #DDDDDD) repeat scroll 0 0 transparent;  box-shadow: 1px 1px 1px #999999; border-radius: 4px 4px 4px 4px; padding: 5px 10px; }
-.performance-page-column-stats								{ background: none; }
-.performance-page-column-stats > table						{ border-collapse: separate; }
-.performance-page-column-stats > table > thead > tr			{ background: none; }
-.performance-page-column-stats > table > thead > tr > th	{ background: none; border: 0px; color: #000; font-size: 10px; text-align: center; padding: 0px 4px; border-left: 1px dotted #aaa; white-space: nowrap; }
-.performance-page-column-stats > table > tbody > tr			{ background: none; }
-.performance-page-column-stats > table > tbody > tr > td	{ background: none; border: 0px; text-align: center; padding: 0px 4px; border-left: 1px dotted #aaa; }
-.performance-page-column-stats > table td					{ width: 60px; }
+.performance-page-table								{ border-collapse: collapse; }
+.performance-page-table > tbody > tr > td			{ background: none; border: 0px; }
+.performance-page-table > tbody > tr				{ background: -o-linear-gradient(#F4F4F4, #ECECEC); background: -moz-linear-gradient(#EEEEEE, #FFFFFF); background: -webkit-linear-gradient(#F4F4F4, #ECECEC); border: 1px solid #ccc; }
+.performance-page-table > tbody > tr:hover			{ background: -o-linear-gradient(#599BDC, #3072B3); background: -moz-linear-gradient(#599BDC, #3072B3); background: -webkit-linear-gradient(#599BDC, #3072B3);  }
+.performance-page-table > tbody > tr:hover *		{ color: #fff; 	}
+.performance-page-table > thead > tr				{ background: none; }
+.performance-page-table > thead > tr > th			{ background: none; color: #000; font-weight: bold; white-space: nowrap; text-align: center; border-bottom: 1px dotted #aaa; }
+.performance-page-table > thead > tr > th a			{ color: #000; }
+.performance-page-table > thead > tr > th a:hover	{ color: #f33; }
+.performance-page-table > tbody > tr				{  }
+.performance-page-table > tbody > tr > td			{ border: 0px; text-align: center; padding: 5px 4px; border-left: 1px dotted #aaa; }
+.performance-page-column-stat 						{ width: 60px; }
+.performance-page-column-sp 						{ text-align: left !important; }
+.performance-page-column-rank						{ width: 50px; }
+

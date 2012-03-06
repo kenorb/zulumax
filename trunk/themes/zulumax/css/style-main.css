@@ -1,0 +1,31 @@
+.custom-sorting-icon-asc				{ background-image: url('../images/sort-asc.png');	background-repeat: no-repeat; width: 16px; height: 16px; display: inline-block; vertical-align: middle; }
+.custom-sorting-icon-desc				{ background-image: url('../images/sort-desc.png');	background-repeat: no-repeat; width: 16px; height: 16px; display: inline-block; vertical-align: middle; }
+
+ul.pager								{ margin: 10px 10px 0px 10px; }
+ul.pager li a							{ padding: 4px 15px !important; display: inline-block !important; min-width: 14px; }
+ul.pager li								{ background: url("../images/pager-background.png") repeat-x scroll 0 0 transparent !important; border-color: #E3E2E2 #D7D7D7 #D2D2D2 !important; border-radius: 3px 3px 3px 3px !important; border-style: solid; border-width: 1px; color: #292929 !important; cursor: pointer; display: inline !important; padding: 6px 5px !important; margin: 0 0 0 0 !important; }
+ul.pager li.pager-next a:hover,
+ul.pager li.pager-previous a:hover,
+ul.pager li.pager-item a:hover,
+ul.pager li.pager-first a:hover,
+ul.pager li.pager-last a:hover			{ border-color: #ddd #ccc #ccc !important; text-decoration: none; }
+ul.pager li.pager-next,
+ul.pager li.pager-previous,
+ul.pager li.pager-ellipsis				{ background: #eee !important; border-color: #d4d5d5 !important; }
+ul.pager li.pager-first,
+ul.pager li.pager-last					{ background: #ddd !important; border-color: #bbb !important; }
+ul.pager li.pager-current				{ background: #ff8 !important; min-width: 40px; display: inline-block !important; padding: 4px 5px !important; }
+ul.pager li.pager-current:hover			{ cursor: default !important; }
+ul.pager li.pager-current				{ background: #ff8 !important; min-width: 60px; display: inline-block !important; padding: 4px 5px !important; }
+ul.pager li.none						{ visibility: hidden; }
+ul.pager li.pager-next:hover a,
+ul.pager li.pager-previous:hover a,
+ul.pager li.pager-item:hover a,
+ul.pager li.pager-first:hover a,
+ul.pager li.pager-last:hover a			{ background: none !important; color: inherit !important; text-shadow: inherit !important; }
+ul.pager li.pager-next:hover,
+ul.pager li.pager-previous:hover,
+ul.pager li.pager-item:hover,
+ul.pager li.pager-first:hover,
+ul.pager li.pager-last:hover,
+ul.pager li.pager-ellipsis:hover		{ background: #222 !important; color: #fff !important; text-shadow: 1px 1px 1px #000 !important; }
