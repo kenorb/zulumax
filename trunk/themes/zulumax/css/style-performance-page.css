@@ -4,7 +4,7 @@
 .performance-page-table > tbody > tr:hover			{ background: -o-linear-gradient(#599BDC, #3072B3); background: -moz-linear-gradient(#599BDC, #3072B3); background: -webkit-linear-gradient(#599BDC, #3072B3);  }
 .performance-page-table > tbody > tr:hover *		{ color: #fff; 	}
 .performance-page-table > thead > tr				{ background: none; }
-.performance-page-table > thead > tr > th			{ background: none; color: #000; font-weight: bold; white-space: nowrap; text-align: center; border-bottom: 1px dotted #aaa; }
+.performance-page-table > thead > tr > th			{ vertical-align: top; background: none; color: #000; font-weight: bold; white-space: nowrap; text-align: center; border-bottom: 1px dotted #aaa; }
 .performance-page-table > thead > tr > th a			{ color: #000; }
 .performance-page-table > thead > tr > th a:hover	{ color: #f33; }
 .performance-page-table > tbody > tr				{  }

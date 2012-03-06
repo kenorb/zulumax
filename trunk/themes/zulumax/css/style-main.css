@@ -29,3 +29,6 @@ ul.pager li.pager-item:hover,
 ul.pager li.pager-first:hover,
 ul.pager li.pager-last:hover,
 ul.pager li.pager-ellipsis:hover		{ background: #222 !important; color: #fff !important; text-shadow: 1px 1px 1px #000 !important; }
+
+.column-num								{ text-align: right !important; }
+div.mini								{ font-size: 10px; line-height: 7px; position: relative; }

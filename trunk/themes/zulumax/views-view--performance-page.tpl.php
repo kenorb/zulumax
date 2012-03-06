@@ -9,47 +9,47 @@
 			<?php echo get_next_sort_link ($view, 'Pips',			'field_profit_value',			'DESC'); ?>
 			<?php echo get_next_sort_link ($view, 'Trades',			'field_trades_value',			'DESC'); ?>
 			<?php echo get_next_sort_link ($view, 'Avg Pips',		'field_avg_pips_trade_value',	'DESC'); ?>
-			<?php echo get_next_sort_link ($view, 'Win %',			'field_winning_trades_value',	'DESC'); ?>
-			<?php echo get_next_sort_link ($view, 'Avg Trade Time',	'field_avg_trade_time_value',	'DESC'); ?>
+			<?php echo get_next_sort_link ($view, 'Win',			'field_winning_trades_value',	'DESC'); ?>
+			<?php echo get_next_sort_link ($view, 'Avg Trade Time',	'field_avg_trade_time_value',	'DESC', '<th style="%th-styles">%link<br/><div class="mini">in hours</div></th>'); ?>
 			<?php echo get_next_sort_link ($view, 'Weeks',			'field_running_weeks_value',	'DESC'); ?>
-			<?php echo get_next_sort_link ($view, 'Max DD%',		'field_max_drawdown_value',		'DESC'); ?>
+			<?php echo get_next_sort_link ($view, 'Max DD',			'field_max_drawdown_value',		'DESC'); ?>
 			<?php echo get_next_sort_link ($view, 'Followers',		'field_followers_value',		'DESC'); ?>
 		<tr>
 	</thead>
 	<?php foreach ($view -> result as $rowId => $row): ?>
 		<tr>
-			<td class="performance-page-column-rank">
+			<td class="column-num performance-page-column-rank">
 				<?php echo $row -> _field_data ['nid'] ['entity'] -> field_ranking ['und'] [0] ['value']; ?>
 			</td>
 			<td class="performance-page-column-sp">
 				<?php echo $view -> style_plugin -> row_tokens [$rowId] ['[title]']; ?>
 			</td>
-			<td class="performance-page-column-stat performance-page-column-stats-column-pips">
+			<td class="column-num performance-page-column-stat performance-page-column-stats-column-pips">
 				<?php echo $view -> style_plugin -> row_tokens [$rowId] ['[field_profit]']; ?>
 			</td>
-			<td class="performance-page-column-stat performance-page-column-stats-column-trades">
+			<td class="column-num performance-page-column-stat performance-page-column-stats-column-trades">
 				<?php echo $view -> style_plugin -> row_tokens [$rowId] ['[field_trades]']; ?>
 			</td>
-			<td class="performance-page-column-stat performance-page-column-stats-column-avg-pips">
+			<td class="column-num performance-page-column-stat performance-page-column-stats-column-avg-pips">
 				<?php echo $view -> style_plugin -> row_tokens [$rowId] ['[field_avg_pips_trade]']; ?>
 			</td>
-			<td class="performance-page-column-stat performance-page-column-stats-column-win-trades">
+			<td class="column-num performance-page-column-stat performance-page-column-stats-column-win-trades">
 				<?php echo number_format (
 					100.0
 					/ $row -> _field_data ['nid'] ['entity'] -> field_trades ['und'] [0] ['value']
 					* $row -> _field_data ['nid'] ['entity'] -> field_winning_trades ['und'] [0] ['value']
-					); ?>
+					); ?> %
 			</td>
-			<td class="performance-page-column-stat performance-page-column-stats-column-avg-trade-time">
+			<td class="column-num performance-page-column-stat performance-page-column-stats-column-avg-trade-time">
 				<?php echo $view -> style_plugin -> row_tokens [$rowId] ['[field_avg_trade_time]']; ?>
 			</td>
-			<td class="performance-page-column-stat performance-page-column-stats-column-weeks">
+			<td class="column-num performance-page-column-stat performance-page-column-stats-column-weeks">
 				<?php echo $view -> style_plugin -> row_tokens [$rowId] ['[field_running_weeks]']; ?>
 			</td>
-			<td class="performance-page-column-stat performance-page-column-stats-column-max-dd">
-				<?php echo $view -> style_plugin -> row_tokens [$rowId] ['[field_max_drawdown]']; ?>
+			<td class="column-num performance-page-column-stat performance-page-column-stats-column-max-dd">
+				<?php echo $view -> style_plugin -> row_tokens [$rowId] ['[field_max_drawdown]']; ?> %
 			</td>
-			<td class="performance-page-column-stat performance-page-column-stats-column-followers">
+			<td class="column-num performance-page-column-stat performance-page-column-stats-column-followers">
 				<?php echo $view -> style_plugin -> row_tokens [$rowId] ['[field_followers]']; ?>
 			</td>
 		</tr>
