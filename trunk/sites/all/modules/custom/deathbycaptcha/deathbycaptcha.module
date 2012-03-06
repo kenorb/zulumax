@@ -131,7 +131,11 @@
 			
 			if (isset ($captchaId))
 			// When function is called second time, it will report the captchaId as not recognized
-				$client -> report ($captchaId);
+			{
+				// @FIXIT: I disabled it for testing purposes.
+				
+				// $client -> report ($captchaId);
+			}
 			
 			if ($captcha = $client -> upload ('base64:' . $content))
 			{

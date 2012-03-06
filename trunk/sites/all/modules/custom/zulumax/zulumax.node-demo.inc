@@ -12,8 +12,6 @@
 	{
 		set_time_limit (3 * 60);
 		
-		/*
-		
 		require_once 'sites/all/modules/custom/deathbycaptcha/deathbycaptcha.module';
 		
 		$moduleEnabledTOR = module_exists ('tor');
@@ -21,10 +19,11 @@
 		if ($moduleEnabledTOR)
 			require_once 'sites/all/modules/custom/tor/tor.module';
 
-		$email						= $vars -> field_email ['und'] [0] ['value'];
-		$balance					= $vars -> field_initial_balance ['und'] [0] ['value'];
-		$accountName			= $vars -> field_account_name ['und'] [0] ['value'];
+		$email				= $vars -> field_email ['und'] [0] ['value'];
+		$balance			= $vars -> field_initial_balance ['und'] [0] ['value'];
+		$accountName		= $vars -> field_account_name ['und'] [0] ['value'];
 		$signalProviders	= $vars -> field_signal_providers ['und'];
+		$accountActivated	= false;
 		
 		
 		$curl = curl_init ();
@@ -49,12 +48,12 @@
 			tor_to_curl ($curl);
 		}
 		
-		curl_setopt ($curl, CURLOPT_COOKIEJAR,			$cookieFile);
-		curl_setopt ($curl, CURLOPT_COOKIEFILE,			$cookieFile);
-		curl_setopt	($curl, CURLOPT_COOKIE,					session_name () . '=' . session_id ());
-		curl_setopt ($curl, CURLOPT_URL,						'http://zulutrade.com/SignUp_Demo.aspx');
-		curl_setopt ($curl, CURLOPT_REFERER,				'http://www.google.com/');
-		curl_setopt ($curl, CURLOPT_AUTOREFERER,		1);
+		curl_setopt ($curl, CURLOPT_COOKIEJAR,		$cookieFile);
+		curl_setopt ($curl, CURLOPT_COOKIEFILE,		$cookieFile);
+		curl_setopt	($curl, CURLOPT_COOKIE,			session_name () . '=' . session_id ());
+		curl_setopt ($curl, CURLOPT_URL,			'http://zulutrade.com/SignUp_Demo.aspx');
+		curl_setopt ($curl, CURLOPT_REFERER,		'http://www.google.com/');
+		curl_setopt ($curl, CURLOPT_AUTOREFERER,	1);
 		curl_setopt ($curl, CURLOPT_FOLLOWLOCATION,	0);
 		curl_setopt ($curl, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt ($curl, CURLOPT_COOKIESESSION,  1);
@@ -74,45 +73,63 @@
 		
 		$captchaURL		= 'http://zulutrade.com/' . $matches [1];
 		
-		$captchaText	= deathbycaptcha_solve_curl_url ($curl, $captchaURL, $captchaId);
+		$captchaId		= null;
+		$tries			= 3;
 		
-		echo 'Captcha solved: <' . $captchaText . "> from " . $captchaURL . "\n";
-		
-		
-		$fields = array (
-			'LBD_VCT_signup_demo_ctl00_box1_personaldetails_captchaverification_bdcaptcha=' . urlencode ($bdCaptcha),
-			'__CVIEWSTATE=' . urlencode ($viewState),
-			'__EVENTARGUMENT=',
-			'__EVENTTARGET=',
-			'__VIEWSTATE=',
-			'ctl00$box1$PersonalDetails$CaptchaVerification$TbGuess=' . urlencode ($captchaText),
-			'ctl00$box1$PersonalDetails$DropDownListCountry=142',
-			'ctl00$box1$PersonalDetails$DropDownListCourtesyTitle=Mr',
-			'ctl00$box1$PersonalDetails$DropDownListState=1',
-			'ctl00$box1$PersonalDetails$TbPhoneCountryCode=48',
-			'ctl00$box1$PersonalDetails$TbPhoneNumber=234567890',
-			'ctl00$box1$PersonalDetails$TextBoxEmail=' . urlencode ($email),
-			'ctl00$box1$PersonalDetails$TextBoxFirstName=' . urlencode ($accountName),
-			'ctl00$box1$PersonalDetails$TextBoxLastName=NotUsed',
-			'ctl00$box1$PersonalDetails$TextBoxMiddleName=',
-			'ctl00$box1$PersonalDetails$ddlBalance=3000',
-			'ctl00$box1$PersonalDetails$ddlLamms=3001',
-			'ctl00$box1$PersonalDetails$ddlLeverage=10',
-			'ctl00$box1$PersonalDetails$txtBalance=' . urlencode ($balance),
-			'ctl00$box1$ctl00=Create my Demo Account'
-		);
-		
-		$postFields = implode ('&', $fields);
-		
-		curl_setopt ($curl, CURLOPT_URL,						'http://zulutrade.com/SignUp_Demo.aspx?Lang=en');
-		curl_setopt ($curl, CURLOPT_HTTPHEADER,			array_merge ($headers, array ('Content-length: ' . strlen ($postFields))));
- 		curl_setopt ($curl, CURLOPT_POST,						1);
- 		curl_setopt ($curl, CURLOPT_POSTFIELDS,			$postFields);
- 		curl_setopt ($curl, CURLOPT_VERBOSE,				0);
- 		curl_setopt ($curl, CURLOPT_FOLLOWLOCATION,	1);
- 		curl_setopt ($curl, CURLOPT_RETURNTRANSFER,	1);
- 		
- 		$content = curl_exec ($curl);
+		do
+		{
+			if ($captchaId)
+				watchdog (t('Creating Demo account ' . $accountName), "Looks like captcha was incorrectly solved. We'll try again", array (), WATCHDOG_WARNING);
+			
+			$captchaText	= deathbycaptcha_solve_curl_url ($curl, $captchaURL, $captchaId);
+			
+			$fields = array (
+				'LBD_VCT_signup_demo_ctl00_box1_personaldetails_captchaverification_bdcaptcha=' . urlencode ($bdCaptcha),
+				'__CVIEWSTATE=' . urlencode ($viewState),
+				'__EVENTARGUMENT=',
+				'__EVENTTARGET=',
+				'__VIEWSTATE=',
+				'ctl00$box1$PersonalDetails$CaptchaVerification$TbGuess=' . urlencode ($captchaText),
+				'ctl00$box1$PersonalDetails$DropDownListCountry=142',
+				'ctl00$box1$PersonalDetails$DropDownListCourtesyTitle=Mr',
+				'ctl00$box1$PersonalDetails$DropDownListState=1',
+				'ctl00$box1$PersonalDetails$TbPhoneCountryCode=48',
+				'ctl00$box1$PersonalDetails$TbPhoneNumber=234567890',
+				'ctl00$box1$PersonalDetails$TextBoxEmail=' . urlencode ($email),
+				'ctl00$box1$PersonalDetails$TextBoxFirstName=' . urlencode ($accountName),
+				'ctl00$box1$PersonalDetails$TextBoxLastName=NotUsed',
+				'ctl00$box1$PersonalDetails$TextBoxMiddleName=',
+				'ctl00$box1$PersonalDetails$ddlBalance=3000',
+				'ctl00$box1$PersonalDetails$ddlLamms=3001',
+				'ctl00$box1$PersonalDetails$ddlLeverage=10',
+				'ctl00$box1$PersonalDetails$txtBalance=' . urlencode ($balance),
+				'ctl00$box1$ctl00=Create my Demo Account'
+			);
+			
+			$postFields = implode ('&', $fields);
+			
+			curl_setopt ($curl, CURLOPT_URL,			'http://zulutrade.com/SignUp_Demo.aspx?Lang=en');
+			curl_setopt ($curl, CURLOPT_HTTPHEADER,		array_merge ($headers, array ('Content-length: ' . strlen ($postFields))));
+	 		curl_setopt ($curl, CURLOPT_POST,			1);
+	 		curl_setopt ($curl, CURLOPT_POSTFIELDS,		$postFields);
+	 		curl_setopt ($curl, CURLOPT_VERBOSE,		0);
+	 		curl_setopt ($curl, CURLOPT_FOLLOWLOCATION,	1);
+	 		curl_setopt ($curl, CURLOPT_RETURNTRANSFER,	1);
+	 		
+	 		$content = curl_exec ($curl);
+	 		
+	 		if (strpos ($content, 'you have exceeded the maximum') !== false)
+	 		// We can't create more accounts
+	 		{
+	 			watchdog (t('Creating Demo account ' . $accountName), "Account limit exceeded for this IP", array (), WATCHDOG_WARNING);
+	 			
+	 			drupal_set_message ('Creating Demo account ' . $accountName. ": Account limit exceeded for this IP", 'error');
+	 			
+	 			return;
+	 		}
+	 		
+		}
+	 	while (strpos ($content, "message: 'Please type the letters") !== false && --$tries > 0);
  		
 		curl_close ($curl);
 		
@@ -128,20 +145,35 @@
 
 		$tries = 10;
 		
+		sleep (3);
+		
 		while ($tries--)
 		{
-			sleep (2);
-			
 			curl_setopt ($curl, CURLOPT_URL, 'http://niepodam.pl/users/' . substr ($email, 0, strpos ($email, '@')));
 			$content = curl_exec ($curl);
 			
 			preg_match ('%/wiadomosci/([0-9]+)%si', $content, $matches);
 			
-			$messageId = $matches [1];
+			$messageId = @$matches [1];
 			
 			if (!$messageId)
 			// No mail yet
+			{
+				if (!$tries)
+				{
+					watchdog (t('Creating Demo account ' . $accountName), "No activation mail received. I tried 10 times with no success", array (), WATCHDOG_CRITICAL);
+					
+					drupal_set_message ('Creating Demo account ' . $accountName. ": No activation mail received. I tried 10 times with no success", 'error');
+					
+					return;
+				}
+				
+				watchdog (t('Creating Demo account ' . $accountName), "No activation mail received yet", array (), WATCHDOG_WARNING);
+				
+				sleep (3);
+				
 				continue;
+			}
 			
 			// Reading new message
 			curl_setopt ($curl, CURLOPT_URL, 'http://niepodam.pl/wiadomosci/' . $messageId);
@@ -155,30 +187,41 @@
 
 			// Finding activation link
 			preg_match ('%"(http://zulutrade\.com/SignUp Activation\.aspx.*?)"%si', $content, $matches);
-			$activationLink = $matches [1];
+			$activationLink	= $matches [1];
+			$activationLink	= str_replace (' ', '_', $activationLink) . '&Lang=en';
+			
+			sleep (2);
 				
 			// Opening activation link
 			curl_setopt ($curl, CURLOPT_URL, $activationLink);
 			$content = curl_exec ($curl);
 			
+			file_put_contents ('C:\activation-result.htm', $content);
+			
+			if (strpos ($content, 'ctl00$box1$tbPassword' !== false))
+			// Good. Allows us to log in
+				$accountActivated = true;
+			
 			break;
 		}
 		
 		$vars -> field_user_name			= array ('und' => array (array ('value' => $finalUserName)));
-		$vars -> field_user_name			= array ('und' => array (array ('value' => $finalUserPassword)));
-		
-		*/
-		
-		$vars -> field_user_name			= array ('und' => array (array ('value' => 'username')));
-		$vars -> field_user_password	= array ('und' => array (array ('value' => 'password')));
+		$vars -> field_user_password		= array ('und' => array (array ('value' => $finalUserPassword)));
 		
 		field_attach_presave ('node',	$vars);
 		
 		field_attach_update ('node',	$vars);
 		
-		workflow_transition ($vars, WorkflowDemoStateActivated);
+		if ($accountActivated)
+		{
+			workflow_transition ($vars, WorkflowDemoStateActivated);
+			
+			drupal_set_message (t("Account activated. You can log in to ZuluTrade using credentials: $finalUserName / $finalUserPassword."));
+		}
+		else
+			drupal_set_message (t("Account has not yet been activated. Probably an activation mail wasn't received."), 'warning');
 		
-		//curl_close ($curl);
+		curl_close ($curl);
 		
 	}
 
