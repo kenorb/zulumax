@@ -14,11 +14,6 @@
 		
 		require_once 'sites/all/modules/custom/deathbycaptcha/deathbycaptcha.module';
 		
-		$moduleEnabledTOR = module_exists ('tor');
-		
-		if ($moduleEnabledTOR)
-			require_once 'sites/all/modules/custom/tor/tor.module';
-
 		$email				= $vars -> field_email ['und'] [0] ['value'];
 		$balance			= $vars -> field_initial_balance ['und'] [0] ['value'];
 		$accountName		= $vars -> field_account_name ['und'] [0] ['value'];
@@ -41,11 +36,10 @@
 		
 		file_put_contents ($cookieFile, '');
 
-		if ($moduleEnabledTOR)
+		if (module_exists ('proxychanger'))
+		// Using Proxy Changer
 		{
-			tor_renew_ip ();
-			
-			tor_to_curl ($curl);
+			proxychanger_to_curl ($curl);
 		}
 		
 		curl_setopt ($curl, CURLOPT_COOKIEJAR,		$cookieFile);
@@ -59,6 +53,16 @@
 		curl_setopt ($curl, CURLOPT_COOKIESESSION,  1);
 		
 		$content			= curl_exec ($curl);
+		
+		if ($content == '')
+		{
+			watchdog (t('Creating Demo account ' . $accountName), "Can't get content via this connection(or proxy)", array (), WATCHDOG_CRITICAL);
+					
+			drupal_set_message ('Creating Demo account ' . $accountName. ": Can't get content via this connection(or proxy)", 'error');
+					
+			return;
+		}
+		
 		
 		preg_match ('/__CVIEWSTATE" value="(.*?)"/si', $content, $matches);
 		
@@ -121,6 +125,20 @@
 	 		if (strpos ($content, 'you have exceeded the maximum') !== false)
 	 		// We can't create more accounts
 	 		{
+				if (module_exists ('proxychanger'))
+				// Trying to renew proxy
+				{
+					if (!proxychanger_renew_proxy ($alreadyUsedProxies))
+					{
+	 					watchdog (t('Creating Demo account ' . $accountName), "Account limit exceeded for this IP and no more proxies to use", array (), WATCHDOG_WARNING);
+	 			
+	 					drupal_set_message ('Creating Demo account ' . $accountName. ": Account limit exceeded for this IP and no more proxies to use", 'error');
+					}
+					
+					proxychanger_to_curl ($curl);
+				}
+	 			
+	 			
 	 			watchdog (t('Creating Demo account ' . $accountName), "Account limit exceeded for this IP", array (), WATCHDOG_WARNING);
 	 			
 	 			drupal_set_message ('Creating Demo account ' . $accountName. ": Account limit exceeded for this IP", 'error');
@@ -198,7 +216,7 @@
 			
 			file_put_contents ('C:\activation-result.htm', $content);
 			
-			if (strpos ($content, 'ctl00$box1$tbPassword' !== false))
+			if (strpos ($content, 'ctl00$box1$tbPassword') !== false)
 			// Good. Allows us to log in
 				$accountActivated = true;
 			
@@ -222,7 +240,6 @@
 			drupal_set_message (t("Account has not yet been activated. Probably an activation mail wasn't received."), 'warning');
 		
 		curl_close ($curl);
-		
 	}
 
 ?>
