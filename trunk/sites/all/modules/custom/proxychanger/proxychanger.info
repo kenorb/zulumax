@@ -1,0 +1,6 @@
+name = Proxy Changer
+description = Changes proxy server on demand
+core = 7.x
+version = 0.1-dev
+files[] = proxychanger.test
+package = ProxyChanger

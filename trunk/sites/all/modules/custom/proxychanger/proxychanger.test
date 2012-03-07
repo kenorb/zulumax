@@ -1,0 +1,27 @@
+<?php
+
+/**
+ * Simpletest unit test for "ProxyChanger" module
+ */
+
+class ProxyChangerTestCase extends DrupalWebTestCase {
+
+	/**
+	 * Implements getInfo().
+	 */
+	public static function getInfo() {
+		return array (
+			'name' => t ('Proxy Changer test'),
+			'description' => t('Tests related to proxychanger module'),
+			'group' => t ('Proxy Changer'),
+		);
+	}
+
+	public function setUp()
+	{
+		parent::setUp ('proxychanger');
+	}
+
+}
+
+?>

@@ -1,0 +1,123 @@
+<?php 
+
+	require_once 'api/ProxyChanger.php';
+
+	/**
+	 * Generates configuration link in the /admin/config page
+	 * @return array
+	 */
+	function proxychanger_menu ()
+	{
+		$items = array (
+			'admin/config/proxychanger' => array
+			(
+				'title'				=> 'Proxy Changer',
+			 	'access arguments'	=> array ('configure proxy changer'),
+				'page callback'		=> 'proxychanger_admin_config_page',
+			 	'weight'			=> -101,
+			 	'position'			=> 'right',
+				'file'				=> 'proxychanger.admin.inc'
+			),
+		
+			'admin/config/proxychanger/settings' => array
+			(
+				'title'				=> 'Proxy Changer',
+			 	'access arguments'	=> array ('configure proxy changer'),
+				'page callback'		=> 'proxychanger_admin_config_page',
+				'file'				=> 'proxychanger.admin.inc'
+			)
+		);
+	
+		return $items;
+	}
+
+	/**
+	 * Retrieves configuration from the database
+	 * @return stdClass Configuration object
+	 */
+	function proxychanger_get_config ()
+	{
+		return (object)array (
+			'proxyChangerEnabled'		=> variable_get ('proxyChangerEnabled',			true),
+			'proxyChangerServers'		=> variable_get ('proxyChangerServers',			''),
+			'proxyChangerServerCurrent'	=> variable_get ('proxyChangerServerCurrent',	0)
+		);
+	}
+	
+	function proxychanger_get_server_list ($forceGet = false)
+	{
+		$configuration = proxychanger_get_config ();
+		
+		if (!$configuration -> proxyChangerEnabled && !$forceGet)
+		// Disabled
+			return null;
+			
+		$servers	= array ();
+		$text		= $configuration -> proxyChangerServers;
+		$lines		= array_map ('trim', explode ("\n", $configuration -> proxyChangerServers));
+		
+		foreach ($lines as $line)
+		{
+			if ($line == '' || substr ($line, 0, 1) == '#' || substr ($line, 0, 2) == '//')
+				continue;
+			
+			$server = new stdClass;
+			
+			@list ($address, $credentials) = explode ('@', $line);
+			
+			if ($address)
+				@list ($server -> serverAddress, $server -> serverPort) = explode (':', $address);
+				
+			if ($credentials)
+				@list ($server -> userName, $server -> userPassword) = explode (':', $credentials);
+			
+			$servers [] = $server;
+		}
+		
+		return $servers;
+	}
+	
+	function proxychanger_get_current_proxy ()
+	{
+		return ProxyChanger::getCurrentProxy ();
+	}
+	
+	function proxychanger_renew_proxy (&$usedProxies)
+	{
+		watchdog ("Proxy Changer", "Changing proxy server", array (), WATCHDOG_INFO);
+		
+		return ProxyChanger::renewProxy ($usedProxies);
+	}
+	
+	function proxychanger_to_curl ($curl)
+	{
+		if (($proxy = proxychanger_get_current_proxy ()) == null)
+			return false;
+		
+		watchdog ("Proxy Changer", "Using proxy server at " . $proxy -> serverAddress . ':' . $proxy -> serverPort, array (), WATCHDOG_INFO);
+		
+		curl_setopt ($curl, CURLOPT_PROXY,				'http://' . $proxy -> serverAddress . ':' . $proxy -> serverPort . '/');
+		curl_setopt ($curl, CURLOPT_PROXYPORT,			$proxy -> serverPort);
+		curl_setopt ($curl, CURLOPT_PROXYTYPE,			CURLPROXY_SOCKS5);
+		curl_setopt ($curl, CURLOPT_PROXYUSERPWD,		@$proxy -> userName ? ($proxy -> userName . ':' . $proxy -> userPassword) : '');
+	}
+	
+	/**
+	 * Called when module is being enabled
+	 */
+	function proxychanger_enable ()
+	{
+		// Nothing here
+	}
+
+	/**
+	 * Declares permissions used by module
+	 * @return array
+	 */
+	function proxychanger_permission ()
+	{
+		return array ('configure proxy changer' => array ('title' => t('Change Proxy Changer settings')));
+	}
+	
+
+?>
