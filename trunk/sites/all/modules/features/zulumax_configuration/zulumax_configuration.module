@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the ZuluMax Configuration feature.
+ */
+
+include_once 'zulumax_configuration.features.inc';

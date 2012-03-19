@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the ZuluMax Demo Accounts feature.
+ */
+
+include_once 'zulumax_demo_accounts.features.inc';
