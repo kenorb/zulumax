@@ -14,5 +14,19 @@ EOT;
 		foreach (explode ("\n", $query) as $row)
 			db_query ($row);
 	}
+	
+	/**
+	 * Adding "demo" nodes trigger assignment
+	 */
+	function zulumax_update_2 ()
+	{
+		$query =
+<<<EOT
+			REPLACE INTO {trigger_assignments} (`hook`, `aid`, `weight`) VALUES ('workflow-demo-1', 'zulumax_create_zulutrade_account', 1);
+EOT;
+	
+		foreach (explode ("\n", $query) as $row)
+			db_query ($row);
+	}
 
 ?>
