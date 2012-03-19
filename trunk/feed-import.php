@@ -3,7 +3,11 @@
 	require_once 'feed-import-signal-providers.php';
 
 	if (!(php_sapi_name () == 'cli' || empty ($_SERVER['REMOTE_ADDR'])))
-		die ('<div class="padding: 20px; font-family: Helvetica, Arial">Sorry, <b>FeedsImporter</b> could be ran from the command line or CRON task only<br />Usage: <i>drush php-script feed-import.php</i></div>');
+	{
+		echo '<div class="padding: 20px; font-family: Helvetica, Arial">Sorry, <b>FeedsImporter</b> could be ran from the command line or CRON task only<br />Usage: <i>drush php-script feed-import.php</i></div>';
+		
+		return;
+	}
 
 	set_time_limit (60 * 30); // 30 minutes
 

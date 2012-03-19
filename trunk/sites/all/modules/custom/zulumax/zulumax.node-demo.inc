@@ -4,6 +4,11 @@
 	define ('WorkflowDemoStateActivated',	3);
 	define ('WorkflowDemoStateExpired',		4);
 
+	function zulumax_log ($text)
+	{
+		file_put_contents (sys_get_temp_dir () . '/zulumax-demo-account-log.txt', date("\n---------------------------------------- Y-m-d H:i:s ----------------------------------------", time()) . "\n" . $text . "\n", FILE_APPEND);
+	}
+	
 	/**
 	 * Executed when the Demo content is being submitted
 	 * @param array Variables from the submitted form
@@ -20,6 +25,7 @@
 		$signalProviders	= $vars -> field_signal_providers ['und'];
 		$accountActivated	= false;
 		
+		zulumax_log ("\n\n\n##### Creating account $accountName with balance $balance\n");
 		
 		$curl = curl_init ();
 
@@ -39,6 +45,8 @@
 		if (module_exists ('proxychanger'))
 		// Using Proxy Changer
 		{
+			zulumax_log ('Will try to use Proxy Changer');
+			
 			proxychanger_to_curl ($curl);
 		}
 		
@@ -59,6 +67,8 @@
 			watchdog (t('Creating Demo account ' . $accountName), "Can't get content via this connection(or proxy)", array (), WATCHDOG_CRITICAL);
 					
 			drupal_set_message ('Creating Demo account ' . $accountName. ": Can't get content via this connection(or proxy)", 'error');
+			
+			zulumax_log ("Can't get content via this connection(or proxy)");
 					
 			return;
 		}
@@ -77,15 +87,23 @@
 		
 		$captchaURL		= 'http://zulutrade.com/' . $matches [1];
 		
+		zulumax_log ('Captcha URL = ' . $captchaURL);
+		
 		$captchaId		= null;
 		$tries			= 3;
 		
 		do
 		{
 			if ($captchaId)
+			{
 				watchdog (t('Creating Demo account ' . $accountName), "Looks like captcha was incorrectly solved. We'll try again", array (), WATCHDOG_WARNING);
+				
+				zulumax_log ('Captcha incorrectly solved');
+			}
 			
 			$captchaText	= deathbycaptcha_solve_curl_url ($curl, $captchaURL, $captchaId);
+			
+			zulumax_log ('Captcha Text = ' . $captchaText);
 			
 			$fields = array (
 				'LBD_VCT_signup_demo_ctl00_box1_personaldetails_captchaverification_bdcaptcha=' . urlencode ($bdCaptcha),
@@ -121,6 +139,8 @@
 	 		curl_setopt ($curl, CURLOPT_RETURNTRANSFER,	1);
 	 		
 	 		$content = curl_exec ($curl);
+			
+			zulumax_log ("Result of http://zulutrade.com/SignUp_Demo.aspx?Lang=en = \n" . $content);
 	 		
 	 		if (strpos ($content, 'you have exceeded the maximum') !== false)
 	 		// We can't create more accounts
@@ -133,12 +153,16 @@
 	 					watchdog (t('Creating Demo account ' . $accountName), "Account limit exceeded for this IP and no more proxies to use", array (), WATCHDOG_WARNING);
 	 			
 	 					drupal_set_message ('Creating Demo account ' . $accountName. ": Account limit exceeded for this IP and no more proxies to use", 'error');
+						
+						zulumax_log ("Account limit exceeded and there are no more proxies to use");
 					}
 					
 					proxychanger_to_curl ($curl);
 				}
 	 			
-	 			
+
+				zulumax_log ("Account limit exceeded");
+				
 	 			watchdog (t('Creating Demo account ' . $accountName), "Account limit exceeded for this IP", array (), WATCHDOG_WARNING);
 	 			
 	 			drupal_set_message ('Creating Demo account ' . $accountName. ": Account limit exceeded for this IP", 'error');
@@ -161,32 +185,42 @@
 		curl_setopt ($curl, CURLOPT_FOLLOWLOCATION,	1);
 		curl_setopt ($curl, CURLOPT_RETURNTRANSFER,	1);
 
-		$tries = 10;
+		$tries = 30;
 		
-		sleep (3);
+		sleep (5);
 		
 		while ($tries--)
 		{
+		
 			curl_setopt ($curl, CURLOPT_URL, 'http://niepodam.pl/users/' . substr ($email, 0, strpos ($email, '@')));
 			$content = curl_exec ($curl);
+			
+			zulumax_log ("Activation mail listing = \n" . $content);
 			
 			preg_match ('%/wiadomosci/([0-9]+)%si', $content, $matches);
 			
 			$messageId = @$matches [1];
 			
-			if (!$messageId)
+			zulumax_log ("Activation mail messageId matches = \n" . print_r ($matches, true));
+			zulumax_log ("Activation mail messageId = " . $messageId);
+			
+			if ($messageId === null)
 			// No mail yet
 			{
 				if (!$tries)
 				{
-					watchdog (t('Creating Demo account ' . $accountName), "No activation mail received. I tried 10 times with no success", array (), WATCHDOG_CRITICAL);
+					watchdog (t('Creating Demo account ' . $accountName), "No activation mail received. I tried 30 times with no success", array (), WATCHDOG_CRITICAL);
 					
-					drupal_set_message ('Creating Demo account ' . $accountName. ": No activation mail received. I tried 10 times with no success", 'error');
+					drupal_set_message ('Creating Demo account ' . $accountName. ": No activation mail received. I tried 30 times with no success", 'error');
+					
+					zulumax_log ("No activation mail after 30 tries");
 					
 					return;
 				}
 				
 				watchdog (t('Creating Demo account ' . $accountName), "No activation mail received yet", array (), WATCHDOG_WARNING);
+				
+				zulumax_log ("No activation mail received yet");
 				
 				sleep (3);
 				
@@ -196,6 +230,8 @@
 			// Reading new message
 			curl_setopt ($curl, CURLOPT_URL, 'http://niepodam.pl/wiadomosci/' . $messageId);
 			$content = curl_exec ($curl);
+			
+			zulumax_log ("Activation mail content = \n" . $content);
 
 			preg_match ('%Username:.*?>([A-Z0-9]+)<%si', $content, $matches);
 			$finalUserName = $matches [1];
@@ -205,8 +241,13 @@
 
 			// Finding activation link
 			preg_match ('%"(http://zulutrade\.com/SignUp Activation\.aspx.*?)"%si', $content, $matches);
+			
+			zulumax_log ("Activation link matches = \n" . print_r ($matches, true));
+			
 			$activationLink	= $matches [1];
 			$activationLink	= str_replace (' ', '_', $activationLink) . '&Lang=en';
+			
+			zulumax_log ("Activation link = " . $activationLink);
 			
 			sleep (2);
 				
@@ -214,7 +255,7 @@
 			curl_setopt ($curl, CURLOPT_URL, $activationLink);
 			$content = curl_exec ($curl);
 			
-			file_put_contents ('C:\activation-result.htm', $content);
+			zulumax_log ("Activation link target content = \n" . $content);
 			
 			if (strpos ($content, 'ctl00$box1$tbPassword') !== false)
 			// Good. Allows us to log in
@@ -235,6 +276,8 @@
 			workflow_transition ($vars, WorkflowDemoStateActivated);
 			
 			drupal_set_message (t("Account activated. You can log in to ZuluTrade using credentials: $finalUserName / $finalUserPassword."));
+			
+			zulumax_log ("Account activated");
 		}
 		else
 			drupal_set_message (t("Account has not yet been activated. Probably an activation mail wasn't received."), 'warning');
