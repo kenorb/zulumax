@@ -6,7 +6,7 @@
 
 	function zulumax_log ($text)
 	{
-		file_put_contents (sys_get_temp_dir () . '/zulumax-demo-account-log.txt', date("\n---------------------------------------- Y-m-d H:i:s ----------------------------------------", time()) . "\n" . $text . "\n", FILE_APPEND);
+		file_put_contents (sys_get_temp_dir () . '/zulumax-demo-account-log-' . date("Y-m-d_H_00_00", time()) . '.txt', "\n----------" . date("Y-m-d_H_i_s", time()) . ":\n" . $text . "\n", FILE_APPEND);
 	}
 	
 	/**
@@ -25,7 +25,7 @@
 		$signalProviders	= $vars -> field_signal_providers ['und'];
 		$accountActivated	= false;
 		
-		zulumax_log ("\n\n\n##### Creating account $accountName with balance $balance\n");
+		zulumax_log ("Creating account $accountName with balance $balance");
 		
 		$curl = curl_init ();
 
