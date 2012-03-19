@@ -12,7 +12,7 @@ function zulumax_demo_accounts_taxonomy_default_vocabularies() {
     'currencies' => array(
       'name' => 'Currencies',
       'machine_name' => 'currencies',
-      'description' => '',
+      'description' => 'Currencies available in the zulutrade site',
       'hierarchy' => '0',
       'module' => 'taxonomy',
       'weight' => '0',

@@ -1,0 +1,18 @@
+<?php
+
+	/**
+	 * Adding "Currencies" vocabulary terms (USD)
+	 */
+	function zulumax_update_1 ()
+	{
+		$query =
+<<<EOT
+			REPLACE INTO {taxonomy_term_data} (`tid`, `vid`, `name`, `description`, `format`, `weight`) VALUES (1, 2, 'USD', '', 'plain_text', 0);
+			REPLACE INTO {taxonomy_term_hierarchy} (`tid`, `parent`) VALUES (1, 0);
+EOT;
+	
+		foreach (explode ("\n", $query) as $row)
+			db_query ($row);
+	}
+
+?>
