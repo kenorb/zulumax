@@ -19,9 +19,8 @@ class DeathByCaptchaTestCase extends DrupalWebTestCase {
 
   public function setUp()
 	{
-    parent::setUp ('deathbycaptch');
+    parent::setUp ('deathbycaptcha');
   }
 
 }
 
-?>

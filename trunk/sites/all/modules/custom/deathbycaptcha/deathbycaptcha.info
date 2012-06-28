@@ -1,7 +1,6 @@
 name = Death by Captcha
-description = Adds support for DeathByCaptcha captcha solver
+description = Integration with DeathByCaptcha captcha solver service
 core = 7.x
-version = 0.1-dev
+package = Security
 files[] = deathbycaptcha.test
-package = Death by Captcha
 
