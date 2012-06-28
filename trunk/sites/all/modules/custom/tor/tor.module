@@ -1,85 +1,83 @@
 <?php 
 
-	require_once 'api/TOR.php';
+require_once 'api/TOR.php';
 
-	/**
-	 * Generates configuration link in the /admin/config page
-	 * @return array
-	 */
-	function tor_menu ()
-	{
-		$items = array (
-			'admin/config/tor' => array
-			(
-			  'title'							=> 'TOR',
-			 	'access arguments'	=> array ('configure tor'),
-				'page callback'			=> 'tor_admin_config_page',
-			 	'weight'						=> -101,
-			 	'position'					=> 'right',
-				'file'							=> 'tor.admin.inc'
-			),
-		
-			'admin/config/tor/settings' => array
-			(
-			  'title'							=> 'TOR',
-			 	'access arguments'	=> array ('configure tor'),
-				'page callback'			=> 'tor_admin_config_page',
-				'file'							=> 'tor.admin.inc'
-		  )
-		);
-	
-		return $items;
-	}
+/**
+ * Generates configuration link in the /admin/config page
+ * @return array
+ */
+function tor_menu ()
+{
+  $items = array (
+    'admin/config/tor' => array
+    (
+      'title'							=> 'TOR',
+      'access arguments'	=> array ('configure tor'),
+      'page callback'			=> 'tor_admin_config_page',
+      'weight'						=> -101,
+      'position'					=> 'right',
+      'file'							=> 'tor.admin.inc'
+    ),
+  
+    'admin/config/tor/settings' => array
+    (
+      'title'							=> 'TOR',
+      'access arguments'	=> array ('configure tor'),
+      'page callback'			=> 'tor_admin_config_page',
+      'file'							=> 'tor.admin.inc'
+    )
+  );
 
-	/**
-	 * Retrieves configuration from the database
-	 * @return stdClass Configuration object
-	 */
-	function tor_get_config ()
-	{
-		return (object)array (
-			'torServerIP'								=> variable_get ('tor_serverIP',							'127.0.0.1'),
-			'torServerPort'							=> variable_get ('tor_serverPort',						'9050'),
-			'torserverControlPort'			=> variable_get ('tor_serverControlPort',			'8050'),
-			'torserverControlPassword'	=> variable_get ('tor_serverControlPassword',	''),
-			'torServerIPsPool'					=> variable_get ('tor_serverIPsPool',					'16')
-		);
-	}
-	
-	function tor_get_current_ip ()
-	{
-		return TOR::getCurrentAddress ();
-	}
-	
-	function tor_renew_ip ()
-	{
-		return TOR::renewAddress ();
-	}
-	
-	
-	function tor_to_curl ($curl)
-	{
-		curl_setopt ($curl, CURLOPT_PROXY,					'http://' . variable_get ('tor_serverIP', '127.0.0.1') . ':' . variable_get ('tor_serverPort', 9050) . '/');
-		curl_setopt ($curl, CURLOPT_PROXYPORT,			variable_get ('tor_serverPort', 9050));
-		curl_setopt ($curl, CURLOPT_PROXYTYPE,			CURLPROXY_SOCKS5);
-	}
-	
-	/**
-	 * Called when module is being enabled
-	 */
-	function tor_enable ()
-	{
-		// Nothing here
-	}
+  return $items;
+}
 
-	/**
-	 * Declares permissions used by module
-	 * @return array
-	 */
-	function tor_permission ()
-	{
-		return array ('configure tor' => array ('title' => t('Change TOR settings')));
-	}
-	
+/**
+ * Retrieves configuration from the database
+ * @return stdClass Configuration object
+ */
+function tor_get_config ()
+{
+  return (object)array (
+    'torServerIP'								=> variable_get ('tor_serverIP',							'127.0.0.1'),
+    'torServerPort'							=> variable_get ('tor_serverPort',						'9050'),
+    'torserverControlPort'			=> variable_get ('tor_serverControlPort',			'8050'),
+    'torserverControlPassword'	=> variable_get ('tor_serverControlPassword',	''),
+    'torServerIPsPool'					=> variable_get ('tor_serverIPsPool',					'16')
+  );
+}
 
-?>
+function tor_get_current_ip ()
+{
+  return TOR::getCurrentAddress ();
+}
+
+function tor_renew_ip ()
+{
+  return TOR::renewAddress ();
+}
+
+
+function tor_to_curl ($curl)
+{
+  curl_setopt ($curl, CURLOPT_PROXY,					'http://' . variable_get ('tor_serverIP', '127.0.0.1') . ':' . variable_get ('tor_serverPort', 9050) . '/');
+  curl_setopt ($curl, CURLOPT_PROXYPORT,			variable_get ('tor_serverPort', 9050));
+  curl_setopt ($curl, CURLOPT_PROXYTYPE,			CURLPROXY_SOCKS5);
+}
+
+/**
+ * Called when module is being enabled
+ */
+function tor_enable ()
+{
+  // Nothing here
+}
+
+/**
+ * Declares permissions used by module
+ * @return array
+ */
+function tor_permission ()
+{
+  return array ('configure tor' => array ('title' => t('Change TOR settings')));
+}
+

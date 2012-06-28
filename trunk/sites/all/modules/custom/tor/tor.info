@@ -1,6 +1,6 @@
 name = TOR
 description = TOR Server Connector
 core = 7.x
-version = 0.1-dev
-files[] = tor.test
-package = TOR
+files[] = tests/tor.test
+package = Security
+
