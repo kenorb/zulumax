@@ -65,14 +65,6 @@ function tor_to_curl ($curl)
 }
 
 /**
- * Called when module is being enabled
- */
-function tor_enable ()
-{
-  // Nothing here
-}
-
-/**
  * Declares permissions used by module
  * @return array
  */
